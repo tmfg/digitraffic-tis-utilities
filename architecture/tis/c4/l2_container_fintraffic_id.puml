@@ -1,0 +1,29 @@
+@startuml
+
+!include https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+title Container Diagram for Fintraffic ID
+
+LAYOUT_TOP_DOWN()
+
+System_Boundary(sb_aws, "Amazon Web Services") {
+    System_Boundary(sb_ftid, "Fintraffic ID") {
+        System(management_interface, "management interface", "Used to configure who can access what within Fintraffic")
+    }
+}
+System_Boundary(sb_azure, "Microsoft Azure") {
+    System_Ext(azure_ad, "Azure AD", "fds")
+}
+Lay_D(sb_aws, sb_azure)
+
+Person(ft_admin, "Fintraffic Administrator", "Person in charge of managing user authorization and access configuration")
+Rel(ft_admin, management_interface, "manages accesses and permissions", "Web GUI")
+Rel(management_interface, azure_ad, "manages directory metadata", " ")
+
+System_Ext(ext_system, "integrating services", "Services which integrate to Fintraffic ID")
+Lay_U(ext_system, sb_aws)
+Lay_U(ext_system, sb_azure)
+Rel(ext_system, azure_ad, "Authentication/Authorization challenges", "OIDC")
+Rel(azure_ad, ext_system, "user tokens", "OIDC")
+
+SHOW_LEGEND()
+@enduml

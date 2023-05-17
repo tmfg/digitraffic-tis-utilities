@@ -11,4 +11,5 @@ System_Boundary(aws, "Amazon Web Services") {
     }
 }
 
+SHOW_LEGEND()
 @enduml

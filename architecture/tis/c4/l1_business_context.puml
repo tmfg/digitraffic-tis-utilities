@@ -2,7 +2,6 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 LAYOUT_TOP_DOWN()
-'LAYOUT_WITH_LEGEND()
 
 System(travelservice,"National Mobility Service")
 System_Ext(finap,"Finap")
@@ -23,4 +22,5 @@ Rel_U(consumer,digitraffic,"Uses information")
 Rel_U(consumer,finap,"Uses information")
 Rel(agg,digitraffic,"Provides information")
 
-@enduml 
+SHOW_LEGEND()
+@enduml

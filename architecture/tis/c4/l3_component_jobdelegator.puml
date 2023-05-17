@@ -4,7 +4,6 @@
 title Component Diagram for Job Delegator
 
 LAYOUT_TOP_DOWN()
-LAYOUT_WITH_LEGEND()
 
 Component(job_delegator, "JobDelegator", "Java", "Reads in processing job notifications and redelegates them accordingly to matching processing queues")
 
@@ -29,4 +28,5 @@ Rel_D(sqs_conversion, conversion, "conversion jobs", "JSON")
 
 Lay_U(conversion, job_delegator)
 
+SHOW_LEGEND()
 @enduml

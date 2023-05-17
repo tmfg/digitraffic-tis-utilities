@@ -2,7 +2,6 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 LAYOUT_TOP_DOWN()
-LAYOUT_WITH_LEGEND()
 
 AddRelTag("deprecated",$textColor="#aaaaaa",$lineColor="#aaaaaa",$lineStyle=DashedLine())
 
@@ -40,4 +39,5 @@ Rel(enki,finap,"API calls","JSON","Publish route information API endpoint")
 Rel(public,enki,"API calls","JSON","Gets route information")
 Rel(finap,public,"http","http","Publishes endpoint API address")
 
+SHOW_LEGEND()
 @enduml

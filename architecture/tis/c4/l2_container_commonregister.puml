@@ -2,8 +2,7 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 LAYOUT_TOP_DOWN()
-LAYOUT_WITH_LEGEND()
- 
+
 Container_Ext(ext1,"External system")
 
 Person(a1,"Fintraffic admin","Person who makes decisions regarding database")
@@ -23,4 +22,5 @@ Rel(stopadd,stop,"Update if not existing")
 Rel(stopclean,stop,"Fixes irregularities")
 Rel(stopclean,a1,"Asks permission to fix found problems")
 
-@enduml 
+SHOW_LEGEND()
+@enduml

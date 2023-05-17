@@ -2,7 +2,6 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
 LAYOUT_TOP_DOWN()
-'LAYOUT_WITH_LEGEND()
 
 System_Boundary(ftcloud,"FTcloud") {
     System(vaco,"VACO")
@@ -36,4 +35,5 @@ Rel(psystem,vaco,"Publish")
 
 Rel(commonr,psystem,"Utilize information")
 
-@enduml 
+SHOW_LEGEND()
+@enduml

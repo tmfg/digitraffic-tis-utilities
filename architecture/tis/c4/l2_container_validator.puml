@@ -6,7 +6,6 @@
 title Container Diagram for Validation-Conversion (VACO))
 
 LAYOUT_TOP_DOWN()
-LAYOUT_WITH_LEGEND()
 
 System_Boundary(sb_externals,"External systems") {
     System_Ext(input,"External system","Nplan, HSL, etc.")
@@ -96,5 +95,5 @@ Rel(aws_sqs, converter, "processes new conversion job message", "message queue")
 ' Rel(logviewer,log,"Access","sql")
 
 
-
+SHOW_LEGEND()
 @enduml

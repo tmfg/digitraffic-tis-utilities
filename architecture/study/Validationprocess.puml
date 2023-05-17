@@ -1,0 +1,39 @@
+@startuml Validation process
+
+title "Process with aggregate database"
+actor "Transport authority, \nService operator" as TA 
+participant "Planning \nsystem\nor\n Nplan" as PS 
+queue "Queue\nhandler" as queue 
+participant "Validation" as validation 
+participant "Conversion" as conversion 
+database "Aggregate database" as aggdb
+participant "Digitraffic" as digitraffic
+
+TA -> PS : Edits timetable \ninformation
+PS -> queue : Publishes timetable 
+activate queue
+queue -> TA : Queue handler provides ticket
+queue -> validation : Moves timetable \nto validation
+validation -> queue : Information about\nvalidation\n(status, errors)
+TA --> queue : Views status information \nwith ticket
+alt Do publish, conversion needed
+validation -> conversion : Moves timetable \nto format conversion
+conversion -> validation : Revalidates conversion\nin case of (logical) errors\ncaused by the conversion
+validation -> conversion : Successful revalidation
+conversion -> queue : Information about conversion\n(status, errors)
+conversion -> aggdb : Publish timetable
+conversion -> digitraffic : Publish timetable
+conversion -> queue : Information about \nsuccessful publish
+else Do publish, no conversion neeeded
+validation -> aggdb : Publish timetable
+validation -> digitraffic : Publish timetable
+validation -> queue : Information about \nsuccessful publish
+else Do not publish (validate only)
+validation -> queue : Information about \nsuccessful validation
+end
+queue --> TA : Optional notification(s) about \nprocess, errors
+deactivate queue
+== Later ==
+TA -> queue : Views logged information
+
+@enduml

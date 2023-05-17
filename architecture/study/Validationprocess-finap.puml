@@ -1,0 +1,35 @@
+@startuml Validation process (finap)
+
+title "Process with Finap"
+actor "Transport authority, \nService operator" as TA 
+participant "Planning \nsystem\nor\n Nplan" as PS 
+database "Finap" as finap
+queue "Queue\nhandler" as queue 
+participant "Validation" as validation 
+participant "Conversion" as conversion 
+
+TA -> PS : Edits timetable \ninformation
+PS -> finap : Publishes timetable 
+finap -> queue : Starts timetable validation
+activate queue
+PS -> queue : Timetable data transfer
+queue -> finap : Queue handler provides ticket
+finap -> TA : Ticket made available to PTA
+queue -> validation : Moves timetable \nto validation
+validation -> queue : Information about\nvalidation\n(status, errors)
+TA --> queue : Views status information \nwith ticket
+alt Conversion needed
+validation -> conversion : Moves timetable \nto format conversion
+conversion -> validation : Revalidates conversion\nin case of (logical) errors\ncaused by the conversion
+validation -> conversion : Successful revalidation
+conversion -> queue : Information about conversion\n(status, errors)
+conversion -> finap : Publish converted\ntimetable
+conversion -> queue : Information about \nsuccessful validation and publish
+end
+queue --> TA : Optional notification(s) about \nprocess, errors
+queue -> finap : Update status information
+deactivate queue
+== Later ==
+TA -> queue : Views logged information
+
+@enduml

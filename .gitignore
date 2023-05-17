@@ -4,7 +4,6 @@ classes/
 checkouts/
 /logs/
 .lsp/
-out/
 bin/
 build/
 .mvn/wrapper/maven-wrapper.jar

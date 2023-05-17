@@ -1,0 +1,26 @@
+@startuml Business context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+'LAYOUT_WITH_LEGEND()
+
+System(travelservice,"National Mobility Service")
+System_Ext(finap,"Finap")
+System_Ext(digitraffic,"Digitraffic")
+System_Ext(agg,"Aggregate database")
+Person_Ext(so,"Service operator")
+Person_Ext(pta,"PTA/TSP")
+Person_Ext(consumer,"Information consumer")
+Person_Ext(mob,"Mobility operator")
+
+Rel(travelservice,finap,"Validates and converts")
+Rel(travelservice,digitraffic,"Provides information")
+Rel(travelservice,agg,"Provides information")
+Rel(so,travelservice,"Provides information")
+Rel(pta,travelservice,"Provides information")
+Rel(mob,travelservice,"Provides information")
+Rel_U(consumer,digitraffic,"Uses information")
+Rel_U(consumer,finap,"Uses information")
+Rel(agg,digitraffic,"Provides information")
+
+@enduml 

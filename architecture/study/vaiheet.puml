@@ -1,0 +1,41 @@
+@startuml Phases
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+AddRelTag("dashed", $textColor="gray", $lineColor="gray", $lineStyle=DashedLine())
+
+System_Boundary(t1,"First phase (Finap)") {
+    System(input,"Source system", "Planning system or Nplan editor")
+    System(vaco,"VACO", "Validation and conversion")
+    System(finap,"Finap")
+    System(digitraffic,"Digitraffic")
+    'Rel(input,vaco," ")
+    Rel(input,finap,"Source systems send timetable data information and API address to Finap","API address, metadata")
+    Rel(finap,vaco,"Finap starts the validation process for received data","API address")
+    Rel(vaco,input,"VACO downloads data from source system via the provided API","data")
+    Person_Ext(p1,"API user")
+    Rel(p1,input,"Users access data via APIs at the source systems")
+    Rel(p1,finap,"Some data is accessed via API at the Finap (converted data, downloaded data)")
+    Rel(vaco,finap,"VACO sends validation results and some converted data back to Finap (for example, data that is converted to Netex Nordic)","Results, converted data")
+    Rel(vaco,digitraffic,"VACO sends validated data to Digitraffic")
+}
+
+System_Boundary(t2,"Second phase (Aggregate database)") {
+    System(input2, "Source system", "Planning system or Nplan editor")
+    System(vaco2,"VACO", "Validation and conversion")
+    System(koonti2,"Aggregate database", "")
+    System(digitraffic2,"Digitraffic")
+    System(finap2,"Finap"," ")
+    Rel(input2,vaco2,"The source system sends data to VACO for validation and conversion", "data")
+    Rel(vaco2,koonti2,"VACO uploads the validated and converted data to the aggregate database", "data")
+    Rel_U(digitraffic2, koonti2, "Digitraffic downloads data from the aggregate database API")
+    Person_Ext(p2,"API user")
+    Rel(p2,koonti2,"Data is accessed via the aggregate database API")
+    Rel(p2,finap2,"Finap continues to function as a catalog of data sources")
+    Rel(p2,input2,"Original source APIs may still be used", "", $tags="dashed")
+    Rel(finap2,digitraffic2,"Finap provides data for Digitraffic")
+}
+
+@enduml

@@ -1,0 +1,22 @@
+@startuml Editing process (Finap)
+
+'skinparam MaxMessageSize 40
+
+title "Editing process with Finap"
+
+actor "Service operator" as editor
+participant "Nplan" as nplan
+participant "VACO" as vaco
+participant "Finap" as finap
+
+actor "API user" as apiuser
+
+editor -> nplan : Edit public services
+nplan -> finap : Publish timetables
+finap <-> vaco : Validate \nand \nconvert
+finap --> nplan : Results and errors
+nplan --> editor : Show results
+finap -> apiuser : Get API \naddress
+apiuser -> nplan : Read timetable data from API
+
+@enduml

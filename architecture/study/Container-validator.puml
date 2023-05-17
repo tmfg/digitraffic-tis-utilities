@@ -1,0 +1,71 @@
+@startuml Container for validator
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+'LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+System_Boundary(e1,"External system") {
+    System_Ext(input,"External system","Nplan, HSL, etc.")
+    Person_Ext(editor,"External system user")
+}
+System_Ext(output,"External system","finap,digitraffic etc.")
+System_Ext(authentication,"User authentication","Azure AD")
+' Container_Ext(sendmail,"Email send")
+
+
+System_Boundary(s1,"VACO") {
+    System_Boundary(q1,"Queue") {
+        Container(handler,"Queue handler"," ","Receives data packets from external systems and moves them to validation one by one.")
+        Container(handlerfront,"Queue handler viewer frontend"," ","Provides information about queued data packets. Gives access to error message log. Sends notifications.")
+    }
+    System_Boundary(v1,"Validation") {
+        Container(inputvalidation,"Input validation","deserializer; FTcloud, JVM","Receives external data and converts it into a known format.")
+        Container(validator,"Validator","FTcloud, JVM","Validates the data against rules.")
+        ContainerDb(rules,"Syntax rules","Postgres")
+        ContainerDb(logicalrules,"Logical rules", "Postgres")
+    }
+    System_Boundary(c1,"Conversion") {
+        Container(converter,"Converter","FTcloud, JVM","Converts data between formats")
+        ContainerDb(fieldmatch,"Field match rules","Postgres")
+        Container(conversionlibrary,"Conversion library","managed dependency")
+        Container(outputvalidation,"Output validation","serializer; FTcloud, JVM","Receives converted data, re-validates it in case of errors caused by conversion and exports it in a known format.")
+    }
+    System_Boundary(eh,"Error handling") {
+        Container(errorlogger,"Error logging and reporting","FTcloud, JVM","Receives error and status messages, saves them into logs and provides status information to the queue handler.")
+    '    Container(logviewer,"Error log viewer","FTcloud,JVM","mahdollistaa virheilmoituslogin tarkastelun")
+        ContainerDb(log,"Log","Postgres")
+    }
+}
+
+ContainerDb_Ext(stopdb,"Stop database")
+
+Rel(input,handler,"Incoming data","presumably structured data")
+Rel(handler,inputvalidation,"Incoming data","presumably structured data")
+Rel(errorlogger,log,"")
+Rel_R(validator,converter,"Validated results","structured data")
+Rel(validator,rules,"Access","JDBC")
+Rel(validator,logicalrules,"Access","JDBC")
+Rel(inputvalidation,validator,"Deserialized results","structured data")
+Rel(converter,conversionlibrary,"Uses","import")
+Rel(converter,fieldmatch,"Uses","JDBC")
+Rel(converter,outputvalidation,"Converted results","structured data")
+Rel(outputvalidation,output,"Output data","structured data")
+Rel(v1,errorlogger,"Error messages","https API")
+Rel(c1,errorlogger,"Error messages","https API")
+' Rel(errorlogger,sendmail,"Error messages","email")
+' Rel(logviewer,log,"Access","sql")
+Rel_R(input,authentication,"Gets access token","OIDC/Oauth 2.0")
+Rel_U(handler,authentication,"Validates token","https")
+Rel(handlerfront,authentication,"Authenticate","OIDC/Oauth 2.0")
+Rel(validator,stopdb,"Uses and updates","API")
+Rel_R(handler,handlerfront,"Uses"," ")
+Rel(handlerfront,errorlogger,"Uses"," ")
+Rel(handlerfront,editor,"Receive information","https, email")
+
+Lay_D(e1,s1)
+Lay_D(v1,c1)
+Lay_D(input,v1)
+Lay_D(s1,output)
+'Lay_D(s1,sendmail)
+
+@enduml

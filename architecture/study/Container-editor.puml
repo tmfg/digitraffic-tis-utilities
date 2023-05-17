@@ -1,0 +1,43 @@
+@startuml Container for editor
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+AddRelTag("deprecated",$textColor="#aaaaaa",$lineColor="#aaaaaa",$lineStyle=DashedLine())
+
+Person(ServiceOperator,"Service operator", "Operator who does not have their own internal planning system")
+
+System_Boundary(s1,"Entur Nplan") {
+    ContainerDb(nplandb,"Database","postgres")
+    Container(abzu,"Stop place register frontend (Abzu)","Node 14")
+    Container(tiamat,"Stop place register backend (Tiamat)","Java 11, Maven 3")
+    Container(uttu,"Backend (Uttu)","Java 11, Maven 3")
+    Container(enki,"Frontend (Enki)","Node 14","")
+    Container(userauth,"User authentication","Auth0","To be replaced with FT user authentication")
+}
+
+Container_Ext(validation,"VACO (Validator and converter)")
+Container_Ext(ftuserauth,"Fintraffic user authentication")
+Container_Ext(stopdatabase,"Fintraffic stop place register")
+Container_Ext(finap,"Finap")
+
+Person_Ext(public,"Public user","Route information endpoint user")
+
+'relationships
+Rel(ServiceOperator,enki,"Access","https")
+Rel(enki,ftuserauth,"User authentication","Oauth 2.0 or similar","Authenticate users against Fintraffic Azure AD (New interface to be created)")
+Rel(enki,userauth,"User authentication","Oauth 2.0 or similar","(deprecated)",$tags="deprecated")
+Rel(enki,uttu,"API calls","structured data")
+Rel(uttu,nplandb,"SQL","jdbc")
+Rel(uttu,validation,"API calls","JSON","Send timetable information to validation and publish (New interface to be created)")
+Rel(uttu,tiamat,"Use","","(deprecated)",$tags="deprecated")
+Rel(uttu,stopdatabase,"Use","","Use Fintraffic stop place register instead of Tiamat (New interface to be created)")
+Rel(abzu,tiamat,"Update")
+Rel(tiamat,nplandb,"SQL","jdbc")
+Rel(uttu,ftuserauth,"Gets token")
+Rel(enki,finap,"API calls","JSON","Publish route information API endpoint")
+Rel(public,enki,"API calls","JSON","Gets route information")
+Rel(finap,public,"http","http","Publishes endpoint API address")
+
+@enduml

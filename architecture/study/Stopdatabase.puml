@@ -1,0 +1,51 @@
+@startuml Stop register process 
+
+title "Stop register"
+'actor "Transport authority, \nService operator" as TA 
+'participant "Planning \nsystem\nor\n Nplan" as PS 
+queue "Queue\nhandler" as queue 
+participant "Validation" as validation 
+participant "Conversion" as conversion 
+'database "Aggregate database \n(Digitraffic)" as aggdb
+participant "Stop register\nupdater" as stopapi
+database "Stop register" as stopdb 
+actor "Stop register\nadmin" as admin
+
+note over validation : Editors and\nplanning systems\ncan make queries\nas well
+== Validation phase ==
+queue -> validation : Start validation
+validation -> stopapi : Query about stop,\nstop details included
+stopapi -> stopdb : Try to fetch stop
+alt Stop found, exact match
+alt Does the query contain new details\nabout the stop? 
+stopapi -> stopdb : Update stop record
+stopapi --> admin : Notify
+end
+stopapi -> validation : Validates
+else No exact match but stop recognized
+stopapi -> validation : Validates, return suggested\nupdates to stop details
+note over validation : If queried from editor,\nit may take suggestions\ninto account
+alt Does the query contain new details\nabout the stop? 
+stopapi -> stopdb : Update stop record
+stopapi --> admin : Notify
+end
+validation -> queue : Relay suggestions as\na message
+else No stop recognized 
+stopapi -> validation : Validation error
+validation -> queue : Relay error message
+end
+== Conversion phase == 
+validation -> conversion : Start conversion
+conversion -> stopdb : Fetch stop details
+stopdb -> conversion : Receive stop details
+== Scheduled integrity check ==
+stopapi -> stopdb : Check database integrity\n(logical errors, duplicates etc)
+alt Integrity problem found
+stopapi -> admin : Error messages
+admin -> stopapi : Instructions on error remedy
+stopapi -> stopdb : Update to fix errors
+end
+
+
+
+@enduml 

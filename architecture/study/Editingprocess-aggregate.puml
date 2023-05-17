@@ -1,0 +1,22 @@
+@startuml Editing process (Aggregate database)
+
+'skinparam MaxMessageSize 40
+
+title "Editing process with Aggregate database"
+
+actor "Service operator" as editor
+participant "Nplan" as nplan
+participant "VACO" as vaco
+participant "Aggregate \ndatabase" as aggdb
+
+actor "API user" as apiuser
+
+editor -> nplan : Edit public services
+nplan -> vaco : Publish timetables
+vaco -> vaco : Validate \nand \nconvert
+vaco --> nplan : Results and errors
+nplan --> editor : Show results
+vaco -> aggdb : Save timetables
+apiuser -> aggdb : Read timetable \ndata from API
+
+@enduml

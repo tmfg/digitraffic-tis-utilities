@@ -1,0 +1,26 @@
+@startuml Common register
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+ 
+Container_Ext(ext1,"External system")
+
+Person(a1,"Fintraffic admin","Person who makes decisions regarding database")
+
+System_Boundary(s1,"Common register") {
+    ContainerDb(stop,"Stop register","","Stops and their attributes. Stops include piers, harbours, airfields, bus stops, train stations etc.")
+    ContainerDb(vehicle,"Vehicle register")
+    ContainerDb(companyid,"Agency ID")
+    ContainerDb(geo,"Geographic polygon register"," ","Geographical entities such as areas, cities, areas at a certain point of time, etc. Based on open source geometry data and updated for the purpose of this project.")
+
+    Container(stopclean,"Stop register refiner","","Goes regularly through database and fixes irregularities such as duplicate entries")
+    Container(stopadd,"Stop register updater","","Checks whether stop is already at the database, adds if not and updates attributes if necessary.")
+}
+
+Rel(ext1,stopadd,"Adds stop")
+Rel(stopadd,stop,"Update if not existing")
+Rel(stopclean,stop,"Fixes irregularities")
+Rel(stopclean,a1,"Asks permission to fix found problems")
+
+@enduml 

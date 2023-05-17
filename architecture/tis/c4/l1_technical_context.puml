@@ -1,0 +1,39 @@
+@startuml Technical context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+'LAYOUT_WITH_LEGEND()
+
+System_Boundary(ftcloud,"FTcloud") {
+    System(vaco,"VACO")
+    System(nplan,"Nplan")
+    System(aggdb,"Aggregate \ndatabase")
+    System(commonr,"Common \nregister")
+    System_Ext(finap,"Finap")
+}
+
+System_Boundary(azure,"Azure") {
+    System_Ext(azuread,"Azure AD")
+}
+
+System_Boundary(dt1,"Digitraffic") {
+    System_Ext(digitraffic,"Digitraffic")
+}
+
+System_Boundary(pta_sys,"PTA/TSP/\nMobility operator \nsystem") {
+    System_Ext(psystem,"Planning \nsystem")
+}
+
+Rel(vaco,azuread,"Authentication")
+Rel(nplan,azuread,"Authentication")
+
+Rel(finap,vaco,"Validate \nand \nconvert")
+
+Rel(vaco,digitraffic,"Publish")
+Rel(aggdb,digitraffic,"Publish")
+
+Rel(psystem,vaco,"Publish")
+
+Rel(commonr,psystem,"Utilize information")
+
+@enduml 

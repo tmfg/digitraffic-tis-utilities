@@ -1,0 +1,84 @@
+@startuml Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+'LAYOUT_WITH_LEGEND()
+
+AddBoundaryTag("inscope", $bgColor="#EEEEEE")
+
+'systems
+Person_Ext(opadmin,"Service operator", "Operator who does not have internal planning systems but uses the editor provided by Fintraffic instead.")
+
+Person_Ext(mobadmin,"Mobility operator")
+' mobility operator
+' pieni = julkaisee tiedot omaa reittiään
+' iso = julkaisee julkaisuputken kautta
+
+Boundary(pta,"PTA/TSP") {
+    Person_Ext(ptadmin,"Transport authority")
+    Container_Ext(exttimedb,"Planning system","","Static timetable information, including prices and fares")
+    Container_Ext(extpricing,"Pricing via myyntijärjestelmä","","Fare information")
+    Container_Ext(extrealtime,"Realtime system","","Realtime position and stop information, occupancy")
+    'Rel(ptadmin,exttimedb,"Edits","manual")
+    'Rel(ptadmin,extpricing,"Edits","manual")
+}
+
+System_Boundary(s1,"Travel information services") {
+    Boundary(e1,"Editor",$tags="inscope") {
+        Container(editor,"Editor","Entur Nplan","Enables manual input of timetable information")
+    }
+    ' editori korvaa myös meriRAE
+    ' kopioidaanko realtime-data vai viitataanko alkuperäiseen?
+    ' feedejä n. 30 kpl joista pari siri-fiidejä
+    ' väliin transformointi GTFS RT -> Siri?
+    Boundary(cr1,"Common register",$tags="inscope") {
+        ContainerDb(commonreg,"Common register","db","Database for unique key values such as stop register, id db, geo entities. At later date could be moved to be part of Aggregate database.")
+    }
+    Container_Ext(userauth,"User authentication","Azure AD","Utilizes User Authentication from ANS Drone project")
+    Boundary(s2,"Validation and conversion service (VACO)",$tags="inscope") {
+        Container(validator,"Validator","","Validates timetables for syntax and logical correctness")
+        Container(converter,"Converter","","Converts data between formats if needed")
+    }
+    Rel(commonreg,validator,"Uses information from and updates","API")
+    Rel(commonreg,editor,"Uses information from and updates","API")
+    Rel(userauth,editor,"Authenticates with","API")
+}
+
+Boundary(a1,"Aggregate database") {
+    ContainerDb_Ext(aggdb,"Aggregate database","","Database that collects all published timetable information and provides that for external parties.")
+    Container_Ext(rthub,"Realtime hub","","Gathers and handles realtime information. Data is validated when a feed is created but not during realtime operation. Actual realtime data is distributed from infomration provider API.")
+}
+ContainerDb_Ext(digitraffic,"Digitraffic")
+Container_Ext(finap,"Finap")
+
+
+'relationships
+Rel(exttimedb,validator,"Sends timetable data","GTFS")
+Rel(validator,ptadmin,"Validation error notifications","email")
+Rel(extrealtime,rthub,"Realtime information","GTFS RT")
+
+Rel(opadmin,editor,"Uses","https")
+
+Rel(commonreg,pta,"Uses information from","API")
+
+Rel(editor,validator,"Sends edits to validation and conversion","Netex")
+
+'Rel(validator,aggdb,"Updates","Netex")
+Rel(validator,converter,"Sends validated data to conversion","Netex, GTFS")
+Rel(converter,aggdb,"Sends validated data to aggregate database","Netex, Siri")
+Rel(mobadmin,aggdb,"Publishes data to aggregate database","Netex")
+Rel(mobadmin,validator,"Sends data to validation and conversion","Netex")
+Rel(extpricing,aggdb,"Updates pricing information")
+'Rel(extrealtime,validator,"Validates input format","Siri, GTFS RT")
+'Rel(rthub,aggdb,"Publishes realtime information","Siri, GTFS RT")
+'Rel(rthub,aggdb,"Updates","Siri")
+
+Rel(converter,digitraffic,"Updates information to","")
+Rel_U(a1,digitraffic,"Updates information to","")
+
+'Lay_D(digitraffic,finap)
+Rel_D(s2,finap,"Uses validator to revalidate information sent to Finap")
+Lay_U(mobadmin,pta)
+
+SHOW_LEGEND()
+@enduml

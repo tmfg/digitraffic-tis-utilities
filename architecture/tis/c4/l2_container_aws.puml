@@ -1,0 +1,14 @@
+@startuml AWS
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+
+System_Boundary(aws, "Amazon Web Services") {
+    System_Boundary(sqs, "Simple Queue Service") {
+        Container(sqs_validation_jobs,"Validation jobs")
+    }
+    System_Boundary(s3, "Simple Storage Service") {
+        Container(s3_some_bucket,"Some bucket")
+    }
+}
+
+@enduml

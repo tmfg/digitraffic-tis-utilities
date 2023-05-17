@@ -45,7 +45,7 @@ System_Boundary(sb_validation,"Validation") {
 }
 Lay_U(sb_validation,sb_aws)
 ContainerDb_Ext(stopdb,"Stop database")
-Rel(validator,stopdb,"Uses and updates","API")
+Rel_L(validator,stopdb,"Uses and updates","API")
 Rel_D(inputvalidation,validator,"Deserialized results","structured data")
 Rel(validator,aws_s3,"Validated results","structured data")
 Rel_U(inputvalidation,aws_s3,"Downloaded input package","possibly structured data")
@@ -58,7 +58,7 @@ System_Boundary(sb_conversion,"Conversion") {
     Container(outputvalidation,"Output validation","serializer; FTcloud, JVM","Receives converted data, re-validates it in case of errors caused by conversion and exports it in a known format.")
 }
 Lay_U(sb_conversion,sb_aws)
-Lay_L(sb_conversion,sb_aws)
+Lay_L(sb_conversion,sb_validation)
 Rel(converter,conversionlibrary,"Uses","import")
 Rel(converter,fieldmatch,"Uses","JDBC")
 Rel_R(converter,outputvalidation,"Converted results","structured data")

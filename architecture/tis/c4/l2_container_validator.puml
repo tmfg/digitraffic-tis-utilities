@@ -1,7 +1,6 @@
 @startuml
 
-'TODO: Make Fintraffic-colored C4 theme
-'!theme cb_seq_OrRd_9 from ./layout
+!theme fintraffic_c4 from ./layout
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 title Container Diagram for Validation-Conversion (VACO)
 

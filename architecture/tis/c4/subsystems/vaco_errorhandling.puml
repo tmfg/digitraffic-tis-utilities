@@ -1,0 +1,12 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!startsub core
+System_Boundary(sb_errorhandling,"Error Handling") {
+    Container(errorlogger,"Error logging and reporting","FTcloud, JVM","Receives error and status messages, saves them into logs and provides status information to the queue handler.")
+    ContainerDb(log,"Log","Postgres")
+}
+Rel(errorlogger,log,"Uses and updates","JDBC")
+!endsub
+
+@enduml

@@ -1,0 +1,19 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!startsub core
+System_Boundary(sb_conversion,"Conversion") {
+    Container(converter,"Converter","FTcloud, JVM","Converts data between formats")
+    ContainerDb(fieldmatch,"Field match rules","Postgres")
+    Container(conversionlibrary,"Conversion library","managed dependency")
+    Container(outputvalidation,"Output validation","serializer; FTcloud, JVM","Receives converted data, re-validates it in case of errors caused by conversion and exports it in a known format.")
+}
+Rel(converter,conversionlibrary,"Uses","import")
+Rel(converter,fieldmatch,"Uses","JDBC")
+Rel(converter,outputvalidation,"Converted results","structured data")
+!endsub
+
+System(errorlogger, "Error logging and reporting", "description")
+Rel(sb_conversion,errorlogger,"Error messages","https API")
+
+@enduml

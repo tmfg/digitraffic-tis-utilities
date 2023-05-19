@@ -1,0 +1,12 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!startsub core
+System_Boundary(sb_queuehandler,"Queue Handler") {
+    Container(handler,"Queue handler"," ","Receives data packets from external systems and moves them to validation one by one.")
+    Container(handlerfront,"Queue handler viewer frontend"," ","Provides information about queued data packets. Gives access to error message log. Sends notifications.")
+}
+Rel_R(handler,handlerfront,"Uses","API")
+!endsub
+
+@enduml

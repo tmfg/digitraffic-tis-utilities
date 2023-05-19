@@ -1,0 +1,18 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+!startsub core
+System_Boundary(sb_validation,"Validation") {
+    Container(inputvalidation,"Input validation","deserializer; FTcloud, JVM","Receives external data and converts it into a known format.")
+    Container(validator,"Validator","FTcloud, JVM","Validates the data against rules.")
+    ContainerDb(rules,"Syntax rules","Postgres")
+    ContainerDb(logicalrules,"Logical rules", "Postgres")
+}
+ContainerDb_Ext(stopdb,"Stop database")
+Rel(validator,stopdb,"Uses and updates","API")
+Rel(inputvalidation,validator,"Deserialized results","structured data")
+Rel(validator,rules,"Access","JDBC")
+Rel(validator,logicalrules,"Access","JDBC")
+!endsub
+
+@enduml

@@ -7,93 +7,56 @@ title Container Diagram for Validation-Conversion (VACO)
 
 LAYOUT_TOP_DOWN()
 
+!includesub subsystems/vaco_queuehandler.puml!core
+!includesub subsystems/vaco_validator.puml!core
+!includesub subsystems/vaco_conversion.puml!core
+!includesub subsystems/vaco_errorhandling.puml!core
+
+''' External System: Generic
 System_Boundary(sb_externals,"External systems") {
     System_Ext(input,"External system","Nplan, HSL, etc.")
     Person_Ext(editor,"External system user")
-    'System_Ext(fintraffic_id, "Fintraffic ID", "User access management")
     System_Ext(authentication,"User authentication","Azure AD")
 }
 Rel_L(input,authentication,"Gets access token","OIDC/Oauth 2.0")
-
-System_Ext(output,"External system","finap,digitraffic etc.")
-
-''' Subsystem: Queue Handler
-System_Boundary(sb_queuehandler,"Queue Handler") {
-    Container(handler,"Queue handler"," ","Receives data packets from external systems and moves them to validation one by one.")
-    Container(handlerfront,"Queue handler viewer frontend"," ","Provides information about queued data packets. Gives access to error message log. Sends notifications.")
-}
-Rel(input,handler,"Incoming data","presumably structured data")
-' Rel_U :s at this point force external systems boundary to top where we want them
-Rel_U(handler,authentication,"Validates token","https")
-Rel_U(handlerfront,editor,"Receive information","https, email")
-Rel_R(handler,handlerfront,"Uses","API")
 
 ''' External System: AWS
 System_Boundary(sb_aws, "Amazon Web Services") {
     System_Ext(aws_sqs, "AWS SQS", "Simple Queue Service")
     System_Ext(aws_s3, "AWS S3", "Simple Storage Service")
 }
+Lay_L(aws_s3, aws_sqs)
+
+System_Ext(output,"External system","finap,digitraffic etc.")
+
+Rel(input,handler,"Incoming data","presumably structured data")
+' Rel_U :s at this point force external systems boundary to top where we want them
+Rel_U(handler,authentication,"Validates token","https")
+Rel_U(handlerfront,editor,"Receive information","https, email")
+
 Lay_U(sb_aws,sb_queuehandler)
 Lay_U(sb_aws,sb_externals)
-
-''' Subsystem: Validation
-System_Boundary(sb_validation,"Validation") {
-    Container(inputvalidation,"Input validation","deserializer; FTcloud, JVM","Receives external data and converts it into a known format.")
-    Container(validator,"Validator","FTcloud, JVM","Validates the data against rules.")
-    ContainerDb(rules,"Syntax rules","Postgres")
-    ContainerDb(logicalrules,"Logical rules", "Postgres")
-}
-Lay_U(sb_validation,sb_aws)
-ContainerDb_Ext(stopdb,"Stop database")
-Rel_L(validator,stopdb,"Uses and updates","API")
-Rel_D(inputvalidation,validator,"Deserialized results","structured data")
-Rel(validator,aws_s3,"Validated results","structured data")
-Rel_U(inputvalidation,aws_s3,"Downloaded input package","possibly structured data")
-
-''' Subsystem: Conversion
-System_Boundary(sb_conversion,"Conversion") {
-    Container(converter,"Converter","FTcloud, JVM","Converts data between formats")
-    ContainerDb(fieldmatch,"Field match rules","Postgres")
-    Container(conversionlibrary,"Conversion library","managed dependency")
-    Container(outputvalidation,"Output validation","serializer; FTcloud, JVM","Receives converted data, re-validates it in case of errors caused by conversion and exports it in a known format.")
-}
-Lay_U(sb_conversion,sb_aws)
-Lay_L(sb_conversion,sb_validation)
-Rel(converter,conversionlibrary,"Uses","import")
-Rel(converter,fieldmatch,"Uses","JDBC")
-Rel_R(converter,outputvalidation,"Converted results","structured data")
-Rel(outputvalidation,output,"Output data","structured data")
+Lay_R(sb_conversion,sb_validation)
 Lay_D(sb_conversion,output)
 
-''' Subsystem: Error Handling
-System_Boundary(sb_errorhandling,"Error handling") {
-    Container(errorlogger,"Error logging and reporting","FTcloud, JVM","Receives error and status messages, saves them into logs and provides status information to the queue handler.")
-'    Container(logviewer,"Error log viewer","FTcloud,JVM","mahdollistaa virheilmoituslogin tarkastelun")
-    ContainerDb(log,"Log","Postgres")
-}
-Lay_U(sb_errorhandling,sb_aws)
+Lay_D(sb_aws,sb_validation)
+Lay_D(sb_aws,sb_conversion)
+Lay_D(sb_aws,sb_errorhandling)
+
+Rel(validator,aws_s3,"Validated results","structured data")
+Rel_D(aws_sqs, inputvalidation, "processes new validation job message", "message queue")
+Rel_U(inputvalidation,aws_s3,"Downloaded input package","possibly structured data")
+
+Rel(outputvalidation,output,"Output data","structured data")
+
 Rel(sb_validation,errorlogger,"Error messages","https API")
 Rel(sb_conversion,errorlogger,"Error messages","https API")
 Rel(errorlogger, handlerfront,"Error messages","https API")
-Rel(validator,rules,"Access","JDBC")
-Rel(validator,logicalrules,"Access","JDBC")
 Rel(handlerfront,authentication,"Authenticate","OIDC/Oauth 2.0")
-Rel(errorlogger,log,"Uses and updates","JDBC")
 
-''' inter-system connects
-Rel_D(handler, aws_sqs, "submits new validation job", "message queue")
-Rel_D(aws_sqs, inputvalidation, "processes new validation job message", "message queue")
-
+Rel(handler, aws_sqs, "submits new validation job", "message queue")
 Rel(validator, aws_sqs, "submits new conversion job", "message queue")
 Rel(aws_sqs, converter, "processes new conversion job message", "message queue")
-
-'Rel(handler,inputvalidation,"Incoming data","presumably structured data")
-
-
-
-' Rel(errorlogger,sendmail,"Error messages","email")
-' Rel(logviewer,log,"Access","sql")
-
 
 SHOW_LEGEND()
 @enduml

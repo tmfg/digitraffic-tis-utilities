@@ -1,0 +1,22 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+!theme fintraffic_c4 from ../layout
+
+autonumber
+
+queue  VacoPublish as "VACO Jobs / Publish"
+control QueueListener
+control Publisher
+database AggregateDB as "Aggregate\nDatabase"
+database EntryDB as "Queue Entry\nDatabase"
+
+VacoPublish -> QueueListener: next queue entry
+QueueListener -> Publisher: entry and job metadata
+Publisher -> Publisher: check job is ready to publish
+Publisher -> AggregateDB: publish job artifacts and metadata
+Publisher <-- AggregateDB: acknowledge publishing
+Publisher -> EntryDB: record publishing result
+QueueListener <-- Publisher: publishing result
+VacoPublish <-- QueueListener: acknowledge entry
+
+@enduml

@@ -1,0 +1,23 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+!theme fintraffic_c4 from ../layout
+
+autonumber
+
+queue  VacoJobs as "VACO Jobs / Validation"
+control QueueListener
+control Validation
+
+VacoJobs --> QueueListener: next queue entry
+QueueListener --> Validation: entry and job metadata
+Validation --> DownloadFile: download related file(s)
+Validation <-- DownloadFile: file references
+Validation --> SelectRuleSets: queue entry details
+Validation <-- SelectRuleSets: validation rules
+Validation --> ExecuteRules: validation rules
+Validation <-- ExecuteRules: validation results
+Validation --> QueueListener: full validation results
+
+VacoJobs <-- QueueListener: acknowledge entry
+
+@enduml

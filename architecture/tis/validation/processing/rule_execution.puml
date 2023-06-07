@@ -1,0 +1,18 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+!startsub core
+participant ExecuteRules
+participant Rule
+loop for each rule
+    ExecuteRules -> Rule: metadata, file references
+    Rule -> Rule: compare entry's format with rule's accepted formats
+else format matches
+    Rule -> Rule: perform rule based validation
+    ExecuteRules <-- Rule: return rule execution results
+else format doesn't match
+    ExecuteRules <-- Rule: return without doing any work
+end
+!endsub
+
+@enduml

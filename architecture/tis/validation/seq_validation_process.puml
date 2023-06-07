@@ -7,16 +7,26 @@ autonumber
 queue  VacoJobs as "VACO Jobs / Validation"
 control QueueListener
 control Validation
+participant DownloadFile
 
-VacoJobs --> QueueListener: next queue entry
-QueueListener --> Validation: entry and job metadata
-Validation --> DownloadFile: download related file(s)
+VacoJobs -> QueueListener: next queue entry
+QueueListener -> Validation: entry and job metadata
+Validation -> DownloadFile: download related file(s)
 Validation <-- DownloadFile: file references
-Validation --> SelectRuleSets: queue entry details
+
+participant SelectRuleSets
+database RulesetsDB
+Validation -> SelectRuleSets: queue entry details
+SelectRuleSets -> RulesetsDB: business id from entry
+SelectRuleSets <-- RulesetsDB: rules to apply
 Validation <-- SelectRuleSets: validation rules
-Validation --> ExecuteRules: validation rules
+
+Validation -> ExecuteRules: metadata, file references, validation rules
+
+!includesub processing/rule_execution.puml!core
+
 Validation <-- ExecuteRules: validation results
-Validation --> QueueListener: full validation results
+QueueListener <-- Validation: validation results
 
 VacoJobs <-- QueueListener: acknowledge entry
 

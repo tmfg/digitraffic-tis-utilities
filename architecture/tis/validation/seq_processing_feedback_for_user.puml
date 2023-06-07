@@ -1,0 +1,25 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+actor FintrafficUser as "Fintraffic ID User"
+boundary QueueAPI as "Queue Handling API"
+database EntryDB as "Queue Entry\nDatabase"
+queue VacoJobs as "VACO Jobs"
+
+FintrafficUser -> QueueAPI: /queue\nsubmit queue entry command
+QueueAPI -> QueueAPI: analyze and augment job request
+QueueAPI -> EntryDB: store job request details
+QueueAPI <-- EntryDB: stored job request details
+QueueAPI -> VacoJobs: submit new queue entry
+FintrafficUser <-- QueueAPI: link to polling API endpoint
+
+loop until job is finished
+FintrafficUser -> QueueAPI: /queue/{entryId}\nrequest job status and details
+QueueAPI -> EntryDB: fetch entry details
+QueueAPI <-- EntryDB: return latest entry details
+FintrafficUser <-- QueueAPI: latest updates on job progress
+end
+
+@enduml

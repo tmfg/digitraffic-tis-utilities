@@ -18,17 +18,17 @@ System_Ext(sqs_conversion, "vaco_jobs_conversion", "AWS SQS topic")
 System_Ext(validation, "Validation", "description")
 System_Ext(conversion, "Conversion", "description")
 
-Rel(sqs_jobs, job_delegator, "receives jobs", "JSON")
-Rel(sqs_validation, job_delegator, "receives jobs", "JSON")
-Rel(sqs_conversion, job_delegator, "receives jobs", "JSON")
+Rel_D(sqs_jobs, job_delegator, "receives jobs", "JSON")
+Rel_U(sqs_validation, sqs_jobs, "resubmit jobs", "JSON")
+Rel_U(sqs_conversion, sqs_jobs, "resubmit jobs", "JSON")
 
 Rel(job_delegator, sqs_conversion, "conversion jobs", "JSON")
 Rel(job_delegator, sqs_validation, "validation jobs", "JSON")
 
-Rel_D(sqs_validation, validation, "validation jobs", "JSON")
-Rel_D(sqs_conversion, conversion, "conversion jobs", "JSON")
+BiRel(sqs_validation, validation, "validation jobs", "JSON")
+BiRel(sqs_conversion, conversion, "conversion jobs", "JSON")
 
-Lay_U(conversion, job_delegator)
+
 
 SHOW_LEGEND()
 @enduml

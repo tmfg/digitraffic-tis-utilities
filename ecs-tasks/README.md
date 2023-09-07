@@ -12,7 +12,7 @@ and output of each rule.
 
 The packaged rules are
 
- - [`gtfs-canonical-4.1.0`](gtfs-canonical-4.1.0) [Mobility Data's GTFS Canonical GTFS Schedule Validator](https://github.com/MobilityData/gtfs-validator/)
+ - [`gtfs-canonical-4.1.0`](gtfs-canonical-v4.1.0) [Mobility Data's GTFS Canonical GTFS Schedule Validator](https://github.com/MobilityData/gtfs-validator/)
    ```shell
    docker build -t gtfs-canonical .
    docker run -v ./data:/data -it gtfs-canonical -i '/data' -o '/data/output'

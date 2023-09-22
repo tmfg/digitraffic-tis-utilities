@@ -14,17 +14,25 @@ The packaged rules are
 
  - [`gtfs-canonical-4.1.0`](gtfs-canonical-v4.1.0) [Mobility Data's GTFS Canonical GTFS Schedule Validator](https://github.com/MobilityData/gtfs-validator/)
    ```shell
-   docker build -t gtfs-canonical .
+   docker build -t gtfs-canonical ./gtfs-canonical-v4.1.0
    docker run -v ./data:/data -it gtfs-canonical -i '/data' -o '/data/output'
    ```
 
-### Development Pointers
+## Development Pointers
 
  - When composing Dockerfile from multiple other images, the base images **must** match!
  - ENV variables most likely need to be redefined to re-enable the copied tools
 
-## Building and Running the Image
+## AWS localstack configuration
+
 ```shell
+LOCALSTACK_ENDPOINT_URL="http://localhost:4566"
+
+➜  ~ aws configure --profile localstack
+AWS Access Key ID [None]: test
+AWS Secret Access Key [None]: test
+Default region name [None]: eu-north-1
+Default output format [None]:
 ```
 
 ---

@@ -1,0 +1,23 @@
+# read env variables - mainly localstack override - from .env:
+set dotenv-load := true
+
+# Lists available Just recipes
+default:
+  @just --list --justfile {{justfile()}}
+
+# Build matching image
+[private]
+build rulename:
+  docker build -t ecs-task-{{rulename}} ./{{rulename}}
+
+# Execute Flyway container target with local customizations
+[private]
+execute rulename:
+  docker run \
+    --rm \
+    --network=tis_tis \
+    -e LOCALSTACK_ENDPOINT_URL=http://localstack:4566 \
+    ecs-task-{{rulename}}
+
+# Run database migrations
+run rule: (build rule) (execute rule)

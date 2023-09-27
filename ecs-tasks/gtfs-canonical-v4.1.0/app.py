@@ -1,4 +1,5 @@
 import base64
+import itertools
 import json
 import logging
 import os
@@ -60,15 +61,23 @@ def upload_s3_file(s3_client, file_name, bucket, object_name):
     return True
 
 
-def notice_to_error(rule_name, job, notice):
-    # camelCasedKeys because input and receiving end are Java/Jackson
+def sample_to_error(common_parts, sample):
     return {
+        **common_parts,
+        **sample,
+        'raw': str(base64.b64encode(json.dumps(sample, ensure_ascii=False).encode('utf-8')), 'utf-8')
+    }
+
+
+def notice_to_errors(rule_name, job, notice):
+    # camelCasedKeys because input and receiving end are Java/Jackson
+    common_parts = {
         'entryId': job['entry']['publicId'],        # note the use of publicId instead of internal id
         'taskId': job['task']['id'],                # TODO: should have publicId for tasks as well
         'source': rule_name,                        # this is in lieu of rulesetId,
-        'message': notice['code'],                  # this is Canonical GTFS Validator's error code string
-        'raw': base64.b64encode(json.dumps(notice).encode('ascii')).decode('ascii')
+        'message': notice['code']                   # this is Canonical GTFS Validator's error code string
     }
+    return list(map(partial(sample_to_error, common_parts), notice['sampleNotices']))
 
 
 def process_job(rule_name, aws, workdir, job):
@@ -109,7 +118,7 @@ def process_job(rule_name, aws, workdir, job):
         gtfs_report = json.load(report)
         # ^-- list of Notices
         logger.info("report.json :> {0}".format(gtfs_report))
-        errors = list(map(partial(notice_to_error, rule_name, job), gtfs_report['notices']))
+        errors = list(itertools.chain(*map(partial(notice_to_errors, rule_name, job), gtfs_report['notices'])))
         logger.info("errors :> {0}".format(errors))
         error_message = {
             'errors': errors

@@ -112,8 +112,8 @@ def process_job(rule_name, aws, workdir, job):
                            full_path,
                            s3_output_uri.authority,
                            s3_output_uri.path + "/" + filename)
-    # TODO: post errors
 
+    # send errors to SQS
     with open(os.path.join(output_dir, 'report.json')) as report:
         gtfs_report = json.load(report)
         # ^-- list of Notices
@@ -124,7 +124,7 @@ def process_job(rule_name, aws, workdir, job):
             'errors': errors
         }
         sqs_resource = aws['sqs']['resource']
-        errors_queue = sqs_resource.get_queue_by_name(QueueName='vaco_errors')
+        errors_queue = sqs_resource.get_queue_by_name(QueueName='vaco-errors')
         errors_queue.send_message(MessageBody=json.dumps(error_message))
 
     # TODO: handle system_errors.json
@@ -151,7 +151,7 @@ def get_aws_client(resource_name):
 
 
 def munge(rule_name):
-    return 'vaco_rules_{0}'.format(rule_name.replace('_', '-').replace('.', '_')).lower()
+    return 'vaco-rules-{0}'.format(rule_name.replace('.', '-')).lower()
 
 
 def run_task(workdir, rule_name):

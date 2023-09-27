@@ -167,7 +167,7 @@ def run_task(workdir, rule_name):
     }
 
     job_queue = aws['sqs']['resource'].get_queue_by_name(QueueName=munge(rule_name))  # TODO: the correct name
-    for job_message in job_queue.receive_messages():
+    for job_message in job_queue.receive_messages(MaxNumberOfMessages=1):
         logger.info("Processing message " + str(job_message))
         job = json.loads(job_message.body)
         logger.info("Processing job " + str(job))

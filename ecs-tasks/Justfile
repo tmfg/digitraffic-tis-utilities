@@ -5,12 +5,12 @@ set dotenv-load := true
 default:
   @just --list --justfile {{justfile()}}
 
-# Build matching image
+# Build rule container identified by its name.
 [private]
 build rulename:
   docker build -t ecs-task-{{rulename}} ./{{rulename}}
 
-# Execute Flyway container target with local customizations
+# Execute rule container identified by its name.
 [private]
 execute rulename:
   docker run \
@@ -19,5 +19,5 @@ execute rulename:
     -e LOCALSTACK_ENDPOINT_URL=http://localstack:4566 \
     ecs-task-{{rulename}}
 
-# Run database migrations
+# Run specific rule identified by its directory name
 run rule: (build rule) (execute rule)

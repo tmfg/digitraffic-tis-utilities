@@ -13,10 +13,17 @@ and output of each rule.
 The packaged rules are
 
  - [`gtfs-canonical-4.1.0`](gtfs-canonical-v4.1.0) [Mobility Data's GTFS Canonical GTFS Schedule Validator](https://github.com/MobilityData/gtfs-validator/)
-   ```shell
-   docker build -t gtfs-canonical ./gtfs-canonical-v4.1.0
-   docker run -v ./data:/data -it gtfs-canonical -i '/data' -o '/data/output'
-   ```
+
+## Running a rule
+
+Use provided Justfile:
+```shell
+just run <rulename>
+```
+for example:
+```shell
+just run gtfs-canonical-v4.1.0
+```
 
 ## Development Pointers
 

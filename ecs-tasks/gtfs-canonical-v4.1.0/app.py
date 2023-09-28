@@ -178,8 +178,8 @@ def run_task(workdir, rule_name):
 def main():
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
         # we're in Localstack environment
-        logger.info("Process running in Localstack, using " + str(os.environ.get("LOCALSTACK_ENDPOINT_URL")) + " as endpoint URL with AWS profile 'localstack'")
-        boto3.setup_default_session(profile_name='localstack')
+        logger.info("Process running in Localstack, using " + str(os.environ.get("LOCALSTACK_ENDPOINT_URL")) + " as endpoint URL with hardcoded AWS dummy credentials")
+        boto3.setup_default_session(aws_access_key_id='localstack', aws_secret_access_key='localstack', region_name='eu-north-1')
 
     with tempfile.TemporaryDirectory() as workdir:
         logger.info('Running task with work directory ' + str(workdir))

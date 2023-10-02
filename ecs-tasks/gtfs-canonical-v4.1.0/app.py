@@ -115,19 +115,19 @@ def process_job(rule_name, aws, workdir, job):
 
 def get_aws_resource(resource_name):
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
-        logger.debug("returning AWS resource '" + resource_name + "' with Localstack configuration")
+        logger.debug(f"returning AWS resource '{resource_name}' with Localstack configuration")
         return boto3.resource(resource_name, endpoint_url=os.environ.get("LOCALSTACK_ENDPOINT_URL"))
     else:
-        logger.debug("returning AWS resource '" + resource_name + "'")
+        logger.debug(f"returning AWS resource '{resource_name}'")
         return boto3.resource(resource_name)
 
 
 def get_aws_client(resource_name):
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
-        logger.debug("returning AWS client '" + resource_name + "' with Localstack configuration")
+        logger.debug(f"returning AWS client '{resource_name}' with Localstack configuration")
         return boto3.client(resource_name, endpoint_url=os.environ.get("LOCALSTACK_ENDPOINT_URL"))
     else:
-        logger.debug("returning AWS resource '" + resource_name + "'")
+        logger.debug(f"returning AWS client '{resource_name}'")
         return boto3.client(resource_name)
 
 
@@ -149,9 +149,9 @@ def run_task(workdir, rule_name):
 
     job_queue = aws['sqs']['resource'].get_queue_by_name(QueueName=munge(rule_name))  # TODO: the correct name
     for job_message in job_queue.receive_messages(MaxNumberOfMessages=1):
-        logger.info("Processing message " + str(job_message))
+        logger.info(f"Processing message {str(job_message)}")
         job = json.loads(job_message.body)
-        logger.info("Processing job " + str(job))
+        logger.info(f"Processing job {str(job)}")
         process_job(rule_name, aws, workdir, job)
         job_message.delete()
 
@@ -159,11 +159,11 @@ def run_task(workdir, rule_name):
 def main():
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
         # we're in Localstack environment
-        logger.info("Process running in Localstack, using " + str(os.environ.get("LOCALSTACK_ENDPOINT_URL")) + " as endpoint URL with hardcoded AWS dummy credentials")
+        logger.info(f"Process running in Localstack, using {os.environ.get('LOCALSTACK_ENDPOINT_URL')} as endpoint URL with hardcoded AWS dummy credentials")
         boto3.setup_default_session(aws_access_key_id='localstack', aws_secret_access_key='localstack', region_name='eu-north-1')
 
     with tempfile.TemporaryDirectory() as workdir:
-        logger.info('Running task with work directory ' + str(workdir))
+        logger.info(f"Running task with work directory {workdir}")
         run_task(workdir, 'gtfs.canonical.v4_1_0')
 
 

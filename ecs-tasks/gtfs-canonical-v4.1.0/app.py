@@ -28,11 +28,11 @@ def download_s3_folder(s3_resource, bucket_name, s3_folder, local_dir):
     for obj in bucket.objects.filter(Prefix=prefix):
         target = os.path.join(local_dir, os.path.relpath(obj.key, prefix))
         if not os.path.exists(os.path.dirname(target)):
-            logger.debug("creating path {0}".format(os.path.dirname(target)))
+            logger.debug(f"creating path {os.path.dirname(target)}")
             os.makedirs(os.path.dirname(target))
         if obj.key[-1] == '/':
             continue
-        logger.info("Downloading file to {0} from s3://{1}/{2}".format(target, bucket_name, prefix))
+        logger.info(f"Downloading file to {target} from s3://{bucket_name}/{prefix}")
         bucket.download_file(obj.key, target)
     return local_dir
 
@@ -47,7 +47,7 @@ def upload_s3_file(s3_client, file_name, bucket, object_name):
     :return: S3 URI of uploaded file, else False
     """
 
-    logger.info("Uploading {0} to s3://{1}/{2}".format(str(file_name), str(bucket), object_name))
+    logger.info(f"Uploading {str(file_name)} to s3://{str(bucket)}/{object_name}")
 
     # Upload the file
     try:
@@ -94,12 +94,12 @@ def process_job(rule_name, aws, workdir, job):
                                s3_output_uri.authority,
                                s3_output_uri.path.removeprefix('/') + "/" + filename)):
                 # TODO: the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
-                uploaded_files.append(urijoin(uriunsplit(s3_output_uri), "output/{0}".format(filename)))
+                uploaded_files.append(urijoin(uriunsplit(s3_output_uri), f"output/{filename}"))
             else:
-                logger.warning("Failed to upload file {0} to {1}".format(full_path, s3_output_uri))
+                logger.warning(f"Failed to upload file {full_path} to {s3_output_uri}")
 
     # ^-- list of Notices
-    logger.info("uploaded_files :> {0}".format(uploaded_files))
+    logger.info(f"uploaded_files :> {uploaded_files}")
     result_message = {
         'entryId': job['entry']['publicId'],        # note the use of publicId instead of internal id
         'taskId': job['task']['id'],                # TODO: should have publicId for tasks as well
@@ -132,7 +132,7 @@ def get_aws_client(resource_name):
 
 
 def munge(rule_name):
-    return 'rules-processing-{0}'.format(rule_name.replace('.', '-')).lower()
+    return f'rules-processing-{rule_name.replace(".", "-")}'.lower()
 
 
 def run_task(workdir, rule_name):

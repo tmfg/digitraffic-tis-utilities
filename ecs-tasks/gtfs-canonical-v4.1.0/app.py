@@ -1,16 +1,13 @@
-import base64
-import itertools
 import json
 import logging
 import os
 import tempfile
 from logging.config import fileConfig
-from functools import partial
 
 import boto3
 import sh
 from botocore.exceptions import ClientError
-from uritools import urisplit
+from uritools import urisplit, uriunsplit, urijoin
 
 fileConfig('logging_config.ini', disable_existing_loggers=False)
 logger = logging.getLogger()
@@ -35,7 +32,7 @@ def download_s3_folder(s3_resource, bucket_name, s3_folder, local_dir):
             os.makedirs(os.path.dirname(target))
         if obj.key[-1] == '/':
             continue
-        logger.info("Downloading everything to {0} from s3://{1}/{2}".format(target, bucket_name, prefix))
+        logger.info("Downloading file to {0} from s3://{1}/{2}".format(target, bucket_name, prefix))
         bucket.download_file(obj.key, target)
     return local_dir
 
@@ -47,7 +44,7 @@ def upload_s3_file(s3_client, file_name, bucket, object_name):
     :param file_name: File to upload
     :param bucket: Bucket to upload to
     :param object_name: S3 object name. If not specified then file_name is used
-    :return: True if file was uploaded, else False
+    :return: S3 URI of uploaded file, else False
     """
 
     logger.info("Uploading {0} to s3://{1}/{2}".format(str(file_name), str(bucket), object_name))
@@ -61,25 +58,6 @@ def upload_s3_file(s3_client, file_name, bucket, object_name):
     return True
 
 
-def sample_to_error(common_parts, sample):
-    return {
-        **common_parts,
-        **sample,
-        'raw': str(base64.b64encode(json.dumps(sample, ensure_ascii=False).encode('utf-8')), 'utf-8')
-    }
-
-
-def notice_to_errors(rule_name, job, notice):
-    # camelCasedKeys because input and receiving end are Java/Jackson
-    common_parts = {
-        'entryId': job['entry']['publicId'],        # note the use of publicId instead of internal id
-        'taskId': job['task']['id'],                # TODO: should have publicId for tasks as well
-        'source': rule_name,                        # this is in lieu of rulesetId,
-        'message': notice['code']                   # this is Canonical GTFS Validator's error code string
-    }
-    return list(map(partial(sample_to_error, common_parts), notice['sampleNotices']))
-
-
 def process_job(rule_name, aws, workdir, job):
     s3_input_uri = urisplit(job["inputs"])
     s3_output_uri = urisplit(job["outputs"])
@@ -88,48 +66,51 @@ def process_job(rule_name, aws, workdir, job):
     s3_client = aws['s3']['client']
     s3_resource = aws['s3']['resource']
 
-    # download inputs
-    downloaded_dir = download_s3_folder(s3_resource,
-                                        s3_input_uri.authority,
-                                        s3_input_uri.path,
-                                        local_dir=os.path.join(workdir, "input"))
+    # prepare local paths
+    input_dir = os.path.join(workdir, "input")
     output_dir = os.path.join(workdir, "output")
     os.makedirs(output_dir)
+    # download inputs
+    download_s3_folder(s3_resource,
+                       s3_input_uri.authority,
+                       s3_input_uri.path,
+                       local_dir=input_dir)
     # run command
     try:
         sh.java("-jar", "gtfs-validator-cli.jar",
-                "-i", os.path.realpath(os.path.join(downloaded_dir, "gtfs.zip")),
+                "-i", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),
                 "-o", os.path.realpath(output_dir),
                 _out=os.path.join(output_dir, "stdout.log"),
                 _err=os.path.join(output_dir, "stderr.log"))
     except sh.ErrorReturnCode as e:
         logger.exception("failed to run subprocess")
     # upload all result files
+    uploaded_files = []
     for filename in os.listdir(output_dir):
         full_path = os.path.join(output_dir, filename)
         if os.path.isfile(full_path):
-            upload_s3_file(s3_client,
-                           full_path,
-                           s3_output_uri.authority,
-                           s3_output_uri.path + "/" + filename)
+            if (upload_s3_file(s3_client,
+                               full_path,
+                               s3_output_uri.authority,
+                               s3_output_uri.path.removeprefix('/') + "/" + filename)):
+                # TODO: the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
+                uploaded_files.append(urijoin(uriunsplit(s3_output_uri), "output/{0}".format(filename)))
+            else:
+                logger.warning("Failed to upload file {0} to {1}".format(full_path, s3_output_uri))
 
-    # send errors to SQS
-    with open(os.path.join(output_dir, 'report.json')) as report:
-        gtfs_report = json.load(report)
-        # ^-- list of Notices
-        logger.info("report.json :> {0}".format(gtfs_report))
-        errors = list(itertools.chain(*map(partial(notice_to_errors, rule_name, job), gtfs_report['notices'])))
-        logger.info("errors :> {0}".format(errors))
-        error_message = {
-            'errors': errors
-        }
-        sqs_resource = aws['sqs']['resource']
-        errors_queue = sqs_resource.get_queue_by_name(QueueName='vaco-errors')
-        errors_queue.send_message(MessageBody=json.dumps(error_message))
-
-    # TODO: handle system_errors.json
-    # json.loads(os.path.join(output_dir, 'system_errors.json'))
-    # TODO: trigger back to generate package
+    # ^-- list of Notices
+    logger.info("uploaded_files :> {0}".format(uploaded_files))
+    result_message = {
+        'entryId': job['entry']['publicId'],        # note the use of publicId instead of internal id
+        'taskId': job['task']['id'],                # TODO: should have publicId for tasks as well
+        'ruleName': rule_name,
+        'inputs': uriunsplit(s3_input_uri),
+        'outputs': uriunsplit(s3_output_uri),
+        'uploadedFiles': uploaded_files
+    }
+    sqs_resource = aws['sqs']['resource']
+    errors_queue = sqs_resource.get_queue_by_name(QueueName='rules-results')
+    errors_queue.send_message(MessageBody=json.dumps(result_message))
 
 
 def get_aws_resource(resource_name):
@@ -151,7 +132,7 @@ def get_aws_client(resource_name):
 
 
 def munge(rule_name):
-    return 'vaco-rules-{0}'.format(rule_name.replace('.', '-')).lower()
+    return 'rules-processing-{0}'.format(rule_name.replace('.', '-')).lower()
 
 
 def run_task(workdir, rule_name):

@@ -88,15 +88,16 @@ def process_job(rule_name, aws, workdir, job):
     uploaded_files = []
     for filename in os.listdir(output_dir):
         full_path = os.path.join(output_dir, filename)
-        if os.path.isfile(full_path):
-            if (upload_s3_file(s3_client,
+        if not os.path.isfile(full_path):
+            continue
+        if not (upload_s3_file(s3_client,
                                full_path,
                                s3_output_uri.authority,
                                s3_output_uri.path.removeprefix('/') + "/" + filename)):
-                # TODO: the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
-                uploaded_files.append(urijoin(uriunsplit(s3_output_uri), f"output/{filename}"))
-            else:
-                logger.warning(f"Failed to upload file {full_path} to {s3_output_uri}")
+            logger.warning(f"Failed to upload file {full_path} to {s3_output_uri}")
+            continue
+        # TODO: the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
+        uploaded_files.append(urijoin(uriunsplit(s3_output_uri), f"output/{filename}"))
 
     # ^-- list of Notices
     logger.info(f"uploaded_files :> {uploaded_files}")

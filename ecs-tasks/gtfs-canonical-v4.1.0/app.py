@@ -1,16 +1,13 @@
-import base64
-import itertools
 import json
 import logging
 import os
 import tempfile
 from logging.config import fileConfig
-from functools import partial
 
 import boto3
 import sh
 from botocore.exceptions import ClientError
-from uritools import urisplit
+from uritools import urisplit, uriunsplit, urijoin
 
 fileConfig('logging_config.ini', disable_existing_loggers=False)
 logger = logging.getLogger()
@@ -31,11 +28,11 @@ def download_s3_folder(s3_resource, bucket_name, s3_folder, local_dir):
     for obj in bucket.objects.filter(Prefix=prefix):
         target = os.path.join(local_dir, os.path.relpath(obj.key, prefix))
         if not os.path.exists(os.path.dirname(target)):
-            logger.debug("creating path {0}".format(os.path.dirname(target)))
+            logger.debug(f"creating path {os.path.dirname(target)}")
             os.makedirs(os.path.dirname(target))
         if obj.key[-1] == '/':
             continue
-        logger.info("Downloading everything to {0} from s3://{1}/{2}".format(target, bucket_name, prefix))
+        logger.info(f"Downloading file to {target} from s3://{bucket_name}/{prefix}")
         bucket.download_file(obj.key, target)
     return local_dir
 
@@ -47,10 +44,10 @@ def upload_s3_file(s3_client, file_name, bucket, object_name):
     :param file_name: File to upload
     :param bucket: Bucket to upload to
     :param object_name: S3 object name. If not specified then file_name is used
-    :return: True if file was uploaded, else False
+    :return: S3 URI of uploaded file, else False
     """
 
-    logger.info("Uploading {0} to s3://{1}/{2}".format(str(file_name), str(bucket), object_name))
+    logger.info(f"Uploading {str(file_name)} to s3://{str(bucket)}/{object_name}")
 
     # Upload the file
     try:
@@ -61,25 +58,6 @@ def upload_s3_file(s3_client, file_name, bucket, object_name):
     return True
 
 
-def sample_to_error(common_parts, sample):
-    return {
-        **common_parts,
-        **sample,
-        'raw': str(base64.b64encode(json.dumps(sample, ensure_ascii=False).encode('utf-8')), 'utf-8')
-    }
-
-
-def notice_to_errors(rule_name, job, notice):
-    # camelCasedKeys because input and receiving end are Java/Jackson
-    common_parts = {
-        'entryId': job['entry']['publicId'],        # note the use of publicId instead of internal id
-        'taskId': job['task']['id'],                # TODO: should have publicId for tasks as well
-        'source': rule_name,                        # this is in lieu of rulesetId,
-        'message': notice['code']                   # this is Canonical GTFS Validator's error code string
-    }
-    return list(map(partial(sample_to_error, common_parts), notice['sampleNotices']))
-
-
 def process_job(rule_name, aws, workdir, job):
     s3_input_uri = urisplit(job["inputs"])
     s3_output_uri = urisplit(job["outputs"])
@@ -88,70 +66,74 @@ def process_job(rule_name, aws, workdir, job):
     s3_client = aws['s3']['client']
     s3_resource = aws['s3']['resource']
 
-    # download inputs
-    downloaded_dir = download_s3_folder(s3_resource,
-                                        s3_input_uri.authority,
-                                        s3_input_uri.path,
-                                        local_dir=os.path.join(workdir, "input"))
+    # prepare local paths
+    input_dir = os.path.join(workdir, "input")
     output_dir = os.path.join(workdir, "output")
     os.makedirs(output_dir)
+    # download inputs
+    download_s3_folder(s3_resource,
+                       s3_input_uri.authority,
+                       s3_input_uri.path,
+                       local_dir=input_dir)
     # run command
     try:
         sh.java("-jar", "gtfs-validator-cli.jar",
-                "-i", os.path.realpath(os.path.join(downloaded_dir, "gtfs.zip")),
+                "-i", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),
                 "-o", os.path.realpath(output_dir),
                 _out=os.path.join(output_dir, "stdout.log"),
                 _err=os.path.join(output_dir, "stderr.log"))
     except sh.ErrorReturnCode as e:
         logger.exception("failed to run subprocess")
     # upload all result files
+    uploaded_files = []
     for filename in os.listdir(output_dir):
         full_path = os.path.join(output_dir, filename)
-        if os.path.isfile(full_path):
-            upload_s3_file(s3_client,
-                           full_path,
-                           s3_output_uri.authority,
-                           s3_output_uri.path + "/" + filename)
+        if not os.path.isfile(full_path):
+            continue
+        if not (upload_s3_file(s3_client,
+                               full_path,
+                               s3_output_uri.authority,
+                               s3_output_uri.path.removeprefix('/') + "/" + filename)):
+            logger.warning(f"Failed to upload file {full_path} to {s3_output_uri}")
+            continue
+        # TODO: the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
+        uploaded_files.append(urijoin(uriunsplit(s3_output_uri), f"output/{filename}"))
 
-    # send errors to SQS
-    with open(os.path.join(output_dir, 'report.json')) as report:
-        gtfs_report = json.load(report)
-        # ^-- list of Notices
-        logger.info("report.json :> {0}".format(gtfs_report))
-        errors = list(itertools.chain(*map(partial(notice_to_errors, rule_name, job), gtfs_report['notices'])))
-        logger.info("errors :> {0}".format(errors))
-        error_message = {
-            'errors': errors
-        }
-        sqs_resource = aws['sqs']['resource']
-        errors_queue = sqs_resource.get_queue_by_name(QueueName='vaco-errors')
-        errors_queue.send_message(MessageBody=json.dumps(error_message))
-
-    # TODO: handle system_errors.json
-    # json.loads(os.path.join(output_dir, 'system_errors.json'))
-    # TODO: trigger back to generate package
+    # ^-- list of Notices
+    logger.info(f"uploaded_files :> {uploaded_files}")
+    result_message = {
+        'entryId': job['entry']['publicId'],        # note the use of publicId instead of internal id
+        'taskId': job['task']['id'],                # TODO: should have publicId for tasks as well
+        'ruleName': rule_name,
+        'inputs': uriunsplit(s3_input_uri),
+        'outputs': uriunsplit(s3_output_uri),
+        'uploadedFiles': uploaded_files
+    }
+    sqs_resource = aws['sqs']['resource']
+    errors_queue = sqs_resource.get_queue_by_name(QueueName='rules-results')
+    errors_queue.send_message(MessageBody=json.dumps(result_message))
 
 
 def get_aws_resource(resource_name):
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
-        logger.debug("returning AWS resource '" + resource_name + "' with Localstack configuration")
+        logger.debug(f"returning AWS resource '{resource_name}' with Localstack configuration")
         return boto3.resource(resource_name, endpoint_url=os.environ.get("LOCALSTACK_ENDPOINT_URL"))
     else:
-        logger.debug("returning AWS resource '" + resource_name + "'")
+        logger.debug(f"returning AWS resource '{resource_name}'")
         return boto3.resource(resource_name)
 
 
 def get_aws_client(resource_name):
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
-        logger.debug("returning AWS client '" + resource_name + "' with Localstack configuration")
+        logger.debug(f"returning AWS client '{resource_name}' with Localstack configuration")
         return boto3.client(resource_name, endpoint_url=os.environ.get("LOCALSTACK_ENDPOINT_URL"))
     else:
-        logger.debug("returning AWS resource '" + resource_name + "'")
+        logger.debug(f"returning AWS client '{resource_name}'")
         return boto3.client(resource_name)
 
 
 def munge(rule_name):
-    return 'vaco-rules-{0}'.format(rule_name.replace('.', '-')).lower()
+    return f'rules-processing-{rule_name.replace(".", "-")}'.lower()
 
 
 def run_task(workdir, rule_name):
@@ -168,9 +150,9 @@ def run_task(workdir, rule_name):
 
     job_queue = aws['sqs']['resource'].get_queue_by_name(QueueName=munge(rule_name))  # TODO: the correct name
     for job_message in job_queue.receive_messages(MaxNumberOfMessages=1):
-        logger.info("Processing message " + str(job_message))
+        logger.info(f"Processing message {str(job_message)}")
         job = json.loads(job_message.body)
-        logger.info("Processing job " + str(job))
+        logger.info(f"Processing job {str(job)}")
         process_job(rule_name, aws, workdir, job)
         job_message.delete()
 
@@ -178,11 +160,11 @@ def run_task(workdir, rule_name):
 def main():
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
         # we're in Localstack environment
-        logger.info("Process running in Localstack, using " + str(os.environ.get("LOCALSTACK_ENDPOINT_URL")) + " as endpoint URL with hardcoded AWS dummy credentials")
+        logger.info(f"Process running in Localstack, using {os.environ.get('LOCALSTACK_ENDPOINT_URL')} as endpoint URL with hardcoded AWS dummy credentials")
         boto3.setup_default_session(aws_access_key_id='localstack', aws_secret_access_key='localstack', region_name='eu-north-1')
 
     with tempfile.TemporaryDirectory() as workdir:
-        logger.info('Running task with work directory ' + str(workdir))
+        logger.info(f"Running task with work directory {workdir}")
         run_task(workdir, 'gtfs.canonical.v4_1_0')
 
 

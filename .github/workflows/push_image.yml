@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   BuildAndPushImagesToECR:
-    name: "Build and Push Images to ECR"
+    name: "${{matrix.package}}"
     runs-on: ubuntu-latest
 
     defaults:

@@ -3,11 +3,17 @@
 
 
 System_Boundary(aws, "Amazon Web Services") {
-    System_Boundary(sqs, "Simple Queue Service") {
-        Container(sqs_validation_jobs,"Validation jobs")
+    System_Ext(sqs, "Simple Queue Service") {
+        Container_Ext(sqs_vaco_jobs,"VACO job delegator")
+        Container_Ext(sqs_vaco_jobs_validation,"VACO validation jobs")
+        Container_Ext(sqs_vaco_jobs_conversion,"VACO conversion jobs")
+        Container_Ext(sqs_vaco_errors,"VACO errors ingest")
+        Container_Ext(rules_results,"Rule results ingest")
+        Container_Ext(rules_processing_per_rule,"Per-rule processing input")
     }
-    System_Boundary(s3, "Simple Storage Service") {
-        Container(s3_some_bucket,"Some bucket")
+    System_Ext(s3, "Simple Storage Service") {
+        Container_Ext(s3_processing,"digitraffic-tis-processing-{env}")
+        Container_Ext(s3_packages,"digitraffic-tis-packages-{env}")
     }
 }
 

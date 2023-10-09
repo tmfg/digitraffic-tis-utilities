@@ -1,0 +1,40 @@
+@startuml Container for VACO
+
+!theme fintraffic_c4 from ../layout
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+title Container Diagram for Validation-Conversion (VACO)
+
+Container_Ext(se_application,"External Applications", "Software System", "TSP/PTA systems, NAPs, transit data editors, external schedulers etc.")
+Person_Ext(pe_user,"System Users", "TSP/PTA users, Fintraffic admins")
+
+System_Boundary(sb_vaco, "Validation-Conversion") {
+    Container(c_viewer, "Validator UI", "Container: UI", "Data submission forms and reports for testing in-development feeds.")
+    Container(c_queuehandler,"Queue Handler", "Container: Queue Handler", "Receives data packets from external systems and moves them to validation one by one.")
+    Container(c_jobdelegator, "Job Delegation", "Container: Job Delegator", "Reads in processing job messages and redelegates them accordingly to matching processing queues")
+    Container(c_validation,"Validation", "Container: Validation", "Receives external data and verifies it for validation.")
+    Container(c_conversion, "Conversion", "Container: Conversion", "Converts validated packages between known formats.")
+    Container(c_rules, "External Rules", "Container: External Rules", "Runs any rule with a safeguarding wrapper")
+    Container(c_rule_results, "Rule Results Handling", "Container: Rule Results", "Processes results of externally executed rules, reporting the results and errors.")
+    Container(c_errorhandling, "Error Handling", "Container: Error Handling", "Receives error and status messages, saves them into database and provides status information to the queue handler.")
+    ContainerDb(cdb_vaco, "VACO DB", "PostgreSQL", "VACO core data storage")
+}
+
+Rel(pe_user, c_viewer, "Uses the system through UI for feed verification")
+Rel(se_application, c_queuehandler, "Automates and integrates to VACO services")
+Rel(c_viewer, c_queuehandler, "Uses UI specific APIs for user-facing features")
+Rel(c_queuehandler, c_jobdelegator, "Submits processing jobs")
+Rel(c_jobdelegator, c_validation, "Submits validation jobs")
+Rel(c_jobdelegator, c_conversion, "Submits conversion jobs")
+Rel(c_validation, c_rules, "Submits prepared validation processing rule jobs")
+Rel(c_conversion, c_rules, "Submits prepared conversion processing rule jobs")
+Rel(c_rules, c_rule_results, "Reports rule processing results for merging with original entry")
+Rel(c_rules, c_errorhandling, "Reports non-rule-specific system failures")
+Rel(c_rule_results, c_errorhandling, "Reports notices and errors from rule results")
+
+Rel(c_queuehandler, cdb_vaco, "Stores entry data and related execution metadata")
+Rel(c_rule_results, cdb_vaco, "Stores rule result data and updates entry metadata")
+Rel(c_errorhandling, cdb_vaco, "Stores rule related notices and errors")
+
+
+SHOW_LEGEND()
+@enduml

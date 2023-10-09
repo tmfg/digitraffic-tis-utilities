@@ -1,0 +1,20 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+!startsub core
+Container_Boundary(cb_conversion, "Conversion") {
+    Component(c_converter,"Converter","Java","Converts validated packages between known formats.")
+    ComponentDb(db_conversion_syntax,"Syntax rules","Postgres")
+    ComponentDb(db_conversion_logical,"Logical rules", "Postgres")
+}
+ComponentQueue_Ext(cq_vaco_conversion, "vaco-jobs-conversion", "AWS SQS", "VACO conversion jobs queue")
+ComponentQueue_Ext(cq_rules_processing_per_rule, "rules-processing-{rulename}", "AWS SQS", "Per-rule processing configuration and execution parameters")
+Rel(cq_vaco_conversion, c_converter, "Triggers conversion job")
+Rel(c_converter, cq_rules_processing_per_rule, "Submits processing initialization messages")
+
+Rel(c_converter, db_conversion_syntax, "Access", "JDBC")
+Rel(c_converter, db_conversion_logical, "Access", "JDBC")
+!endsub
+
+SHOW_LEGEND()
+@enduml

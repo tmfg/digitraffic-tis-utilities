@@ -1,0 +1,19 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+
+!startsub core
+Container_Boundary(cb_rule_results, "Rule Results Handling") {
+    Component(c_resulthandler,"Result handling", "Java", "Processes results of externally executed rules, reporting the results and errors.")
+}
+ComponentQueue_Ext(cq_rules_results, "rules-results", "AWS SQS", "Rule results ingest")
+'ComponentDb(db_queue_entries, "VACO DB", "PostgreSQL", "VACO core data storage")
+Component(c_errorlogger,"Error logging and reporting","Java","Receives error and status messages, saves them into database and provides status information to the queue handler.")
+
+Rel(cq_rules_results, c_resulthandler, "Triggers result handling")
+'Rel(c_resulthandler, db_queue_entries, "Stores rule execution results")
+Rel(c_resulthandler, c_errorlogger, "Submits errors")
+!endsub
+
+SHOW_LEGEND()
+@enduml

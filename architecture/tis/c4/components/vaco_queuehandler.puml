@@ -1,0 +1,22 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+!startsub core
+System_Ext(se_application,"External systems and applications")
+
+Component(c_viewer,"Queue handler viewer frontend","TypeScript","Provides information about queued data packets. Gives access to error message log. Sends notifications.")
+
+Container_Boundary(cb_queuehandler,"Queue Handler") {
+    Component(c_api_backend,"Queue handler","Java","Receives data packets from external systems and moves them to validation one by one.")
+    'ComponentDb(db_queue_entries, "VACO DB", "PostgreSQL", "VACO core data storage")
+}
+ComponentQueue_Ext(cq_vaco_jobs, "vaco-jobs", "AWS SQS", "VACO job delegation queue")
+
+BiRel(c_viewer, c_api_backend, "Uses", "UI specific API")
+Rel(se_application, c_api_backend, "Uses", "REST API")
+Rel(c_api_backend, cq_vaco_jobs, "Submits jobs")
+'BiRel(c_api_backend, db_queue_entries, "Stores entry data")
+!endsub
+
+SHOW_LEGEND()
+@enduml

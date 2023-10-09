@@ -1,0 +1,17 @@
+@startuml
+
+!theme fintraffic_c4 from ../layout
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+title Component Diagram for Validation-Conversion (VACO)
+
+!includesub components/vaco_ui.puml!core
+!includesub components/vaco_queuehandler.puml!core
+!includesub components/vaco_jobdelegator.puml!core
+!includesub components/vaco_validation.puml!core
+!includesub components/vaco_conversion.puml!core
+!includesub components/vaco_external_rules.puml!core
+!includesub components/vaco_errorhandling.puml!core
+!includesub components/vaco_rule_results.puml!core
+
+SHOW_LEGEND()
+@enduml

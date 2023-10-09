@@ -5,9 +5,11 @@ import tempfile
 from logging.config import fileConfig
 
 import boto3
-import sh
 from botocore.exceptions import ClientError
 from uritools import urisplit, uriunsplit, urijoin
+
+# NOTE: this rule script will be overwritten in Docker containers! The default is just an echo function.
+import rule
 
 fileConfig('logging_config.ini', disable_existing_loggers=False)
 logger = logging.getLogger()
@@ -76,14 +78,7 @@ def process_job(rule_name, aws, workdir, job):
                        s3_input_uri.path,
                        local_dir=input_dir)
     # run command
-    try:
-        sh.java("-jar", "gtfs-validator-cli.jar",
-                "-i", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),
-                "-o", os.path.realpath(output_dir),
-                _out=os.path.join(output_dir, "stdout.log"),
-                _err=os.path.join(output_dir, "stderr.log"))
-    except sh.ErrorReturnCode as e:
-        logger.exception("failed to run subprocess")
+    rule.run(input_dir, output_dir)
     # upload all result files
     uploaded_files = []
     for filename in os.listdir(output_dir):

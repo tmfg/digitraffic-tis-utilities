@@ -1,4 +1,5 @@
 @startuml
+!theme fintraffic_c4 from ../../layout
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 

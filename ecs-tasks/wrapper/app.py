@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 import os
@@ -152,7 +153,7 @@ def run_task(workdir, rule_name):
         job_message.delete()
 
 
-def main():
+def main(rule_name):
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
         # we're in Localstack environment
         logger.info(f"Process running in Localstack, using {os.environ.get('LOCALSTACK_ENDPOINT_URL')} as endpoint URL with hardcoded AWS dummy credentials")
@@ -160,8 +161,11 @@ def main():
 
     with tempfile.TemporaryDirectory() as workdir:
         logger.info(f"Running task with work directory {workdir}")
-        run_task(workdir, 'gtfs.canonical.v4_1_0')
+        run_task(workdir, rule_name)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--rule-name')
+    args = parser.parse_args()
+    main(args.rule_name)

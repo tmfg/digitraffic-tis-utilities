@@ -1,0 +1,16 @@
+@startuml
+!theme fintraffic_c4 from ../../layout
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+!startsub core
+Person_Ext(pe_user,"External system users")
+
+Container_Boundary(cb_viewer, "Validator UI") {
+    Component(c_viewer,"Queue handler viewer frontend","TypeScript","Data submission forms and reports for testing in-development feeds.")
+}
+
+Rel(pe_user, c_viewer, "Uses", "Web UI")
+!endsub
+
+SHOW_LEGEND()
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+!theme fintraffic_c4 from ../../layout
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+
+!startsub core
+Container_Boundary(cb_validation,"Validation") {
+    Component(inputvalidation,"Input validation","deserializer; FTcloud, JVM","Receives external data and verifies it for validation.")
+    Component(validator,"Validator","FTcloud, JVM","Initializes rule runners and prepares inputs")
+    ComponentDb(db_validation_syntax,"Syntax rules","Postgres")
+    ComponentDb(db_validation_logical,"Logical rules", "Postgres")
+}
+ComponentQueue_Ext(cq_vaco_validation, "vaco-jobs-validation", "AWS SQS", "VACO validation jobs queue")
+ComponentQueue_Ext(cq_rules_processing_per_rule, "rules-processing-{rulename}", "AWS SQS", "Per-rule processing configuration and execution parameters")
+Rel(cq_vaco_validation, inputvalidation, "Triggers validation job")
+Rel(validator, cq_rules_processing_per_rule, "Submits processing initialization messages")
+
+ComponentDb_Ext(stopdb,"Stop database")
+Rel(validator,stopdb,"Uses and updates","API")
+Rel(inputvalidation,validator,"Deserialized results","structured data")
+Rel(validator,db_validation_syntax,"Access","JDBC")
+Rel(validator,db_validation_logical,"Access","JDBC")
+!endsub
+
+SHOW_LEGEND()
+@enduml

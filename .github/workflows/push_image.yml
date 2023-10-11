@@ -57,7 +57,7 @@ jobs:
           IMAGE_TAG: ${{ steps.version.outputs.version }}
         run: |
           ECR_REPOSITORY="digitraffic-tis-rule-${RULE_DIRECTORY//./_}"
-          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest ./${RULE_DIRECTORY}
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:latest -f ./${RULE_DIRECTORY}/Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:latest $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG

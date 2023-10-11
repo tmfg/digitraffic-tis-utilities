@@ -16,7 +16,10 @@ ENV LANG=C.UTF-8
 
 USER root
 WORKDIR /
-ADD . /
+# add generic wrapper
+ADD ./wrapper /
+# add rule specific override, will override parts of wrapper
+ADD ./gtfs-canonical-v4.1.0/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-ENTRYPOINT ["python", "app.py"]
+ENTRYPOINT ["python", "app.py", "gtfs.canonical.v4_1_0"]

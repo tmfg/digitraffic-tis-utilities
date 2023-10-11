@@ -8,7 +8,7 @@ default:
 # Build rule container identified by its name.
 [private]
 build rulename:
-  docker build -t ecs-task-{{rulename}} ./{{rulename}}
+  docker build -t ecs-task-{{rulename}} -f ./{{rulename}}/Dockerfile .
 
 # Execute rule container identified by its name.
 [private]

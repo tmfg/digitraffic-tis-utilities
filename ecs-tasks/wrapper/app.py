@@ -1,3 +1,4 @@
+import argparse
 import json
 import logging
 import os
@@ -5,9 +6,11 @@ import tempfile
 from logging.config import fileConfig
 
 import boto3
-import sh
 from botocore.exceptions import ClientError
 from uritools import urisplit, uriunsplit, urijoin
+
+# NOTE: this rule script will be overwritten in Docker containers! The default is just an echo function.
+import rule
 
 fileConfig('logging_config.ini', disable_existing_loggers=False)
 logger = logging.getLogger()
@@ -76,14 +79,7 @@ def process_job(rule_name, aws, workdir, job):
                        s3_input_uri.path,
                        local_dir=input_dir)
     # run command
-    try:
-        sh.java("-jar", "gtfs-validator-cli.jar",
-                "-i", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),
-                "-o", os.path.realpath(output_dir),
-                _out=os.path.join(output_dir, "stdout.log"),
-                _err=os.path.join(output_dir, "stderr.log"))
-    except sh.ErrorReturnCode as e:
-        logger.exception("failed to run subprocess")
+    rule.run(input_dir, output_dir)
     # upload all result files
     uploaded_files = []
     for filename in os.listdir(output_dir):
@@ -157,7 +153,7 @@ def run_task(workdir, rule_name):
         job_message.delete()
 
 
-def main():
+def main(rule_name):
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
         # we're in Localstack environment
         logger.info(f"Process running in Localstack, using {os.environ.get('LOCALSTACK_ENDPOINT_URL')} as endpoint URL with hardcoded AWS dummy credentials")
@@ -165,8 +161,11 @@ def main():
 
     with tempfile.TemporaryDirectory() as workdir:
         logger.info(f"Running task with work directory {workdir}")
-        run_task(workdir, 'gtfs.canonical.v4_1_0')
+        run_task(workdir, rule_name)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-r', '--rule-name')
+    args = parser.parse_args()
+    main(args.rule_name)

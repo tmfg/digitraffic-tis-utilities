@@ -22,4 +22,4 @@ ADD ./wrapper /
 ADD ./gtfs-canonical-v4.1.0/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-ENTRYPOINT ["python", "app.py", "gtfs.canonical.v4_1_0"]
+ENTRYPOINT ["python", "app.py", "--rule-name", "gtfs.canonical.v4_1_0"]

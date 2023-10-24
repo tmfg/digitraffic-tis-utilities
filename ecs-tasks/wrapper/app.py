@@ -79,10 +79,15 @@ def process_job(rule_name, aws, workdir, job):
                        s3_input_uri.path,
                        local_dir=input_dir)
     # run command
-    rule.run(input_dir, output_dir)
-    # upload all result files
-    uploaded_files = []
+    outputs_meta = rule.run(input_dir, output_dir)
+    # map of uploaded result files with list of package scopes
+    uploaded_files = {}
     for filename in os.listdir(output_dir):
+        # add packages metadata to produced files, default to nothing
+        packages = list(outputs_meta.get(filename, []))
+        # add all produced files to 'all' package
+        packages.extend(['all'])
+        # resolve full path of the produced file for uploading to S3
         full_path = os.path.join(output_dir, filename)
         if not os.path.isfile(full_path):
             continue
@@ -92,8 +97,8 @@ def process_job(rule_name, aws, workdir, job):
                                s3_output_uri.path.removeprefix('/') + "/" + filename)):
             logger.warning(f"Failed to upload file {full_path} to {s3_output_uri}")
             continue
-        # TODO: the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
-        uploaded_files.append(urijoin(uriunsplit(s3_output_uri), f"output/{filename}"))
+        # the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
+        uploaded_files[urijoin(uriunsplit(s3_output_uri), f"output/{filename}")] = packages
 
     # ^-- list of Notices
     logger.info(f"uploaded_files :> {uploaded_files}")

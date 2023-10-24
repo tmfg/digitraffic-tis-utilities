@@ -12,5 +12,10 @@ def run(input_dir, output_dir):
                 "-o", os.path.realpath(output_dir),
                 _out=os.path.join(output_dir, "stdout.log"),
                 _err=os.path.join(output_dir, "stderr.log"))
+        return {
+            'stdout.log': ['debug'],
+            'stderr.log': ['debug'],
+            'reports.json': ['report']
+        }
     except sh.ErrorReturnCode as e:
         logger.exception("failed to run subprocess")

@@ -1,6 +1,6 @@
-FROM debian:bullseye-slim
-COPY --from=python:3.11-slim-bullseye / /
-COPY --from=openjdk:21-slim-bullseye / /
+FROM debian:bookworm-slim
+COPY --from=python:3.11-slim-bookworm / /
+COPY --from=openjdk:21-slim-bookworm / /
 COPY --from=ghcr.io/mobilitydata/gtfs-validator:4.1.0 /gtfs-validator-cli.jar /gtfs-validator-cli.jar
 
 ### copy of ENVs from merged images

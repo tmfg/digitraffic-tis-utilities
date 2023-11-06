@@ -20,3 +20,4 @@ def run(input_dir, output_dir):
         }
     except sh.ErrorReturnCode as e:
         logger.exception("failed to run subprocess")
+        return dict()

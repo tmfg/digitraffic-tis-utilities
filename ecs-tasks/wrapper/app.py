@@ -80,11 +80,12 @@ def process_job(rule_name, aws, workdir, job):
                        local_dir=input_dir)
     # run command
     outputs_meta = rule.run(input_dir, output_dir)
+    logger.info(f"Rule produced {outputs_meta}")
     # map of uploaded result files with list of package scopes
     uploaded_files = {}
     for filename in os.listdir(output_dir):
         # add packages metadata to produced files, default to nothing
-        packages = list(outputs_meta.get(filename, []))
+        packages = list(outputs_meta.get(filename, list()))
         # add all produced files to 'all' package
         packages.extend(['all'])
         # resolve full path of the produced file for uploading to S3

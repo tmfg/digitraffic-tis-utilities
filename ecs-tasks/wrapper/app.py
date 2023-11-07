@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 from logging.config import fileConfig
 
 import boto3
@@ -151,12 +152,17 @@ def run_task(workdir, rule_name):
     }
 
     job_queue = aws['sqs']['resource'].get_queue_by_name(QueueName=munge(rule_name))  # TODO: the correct name
-    for job_message in job_queue.receive_messages(MaxNumberOfMessages=1):
-        logger.info(f"Processing message {str(job_message)}")
-        job = json.loads(job_message.body)
-        logger.info(f"Processing job {str(job)}")
-        process_job(rule_name, aws, workdir, job)
-        job_message.delete()
+
+    contains_messages = True
+    while contains_messages:
+        messages = job_queue.receive_messages(MaxNumberOfMessages=1)
+        contains_messages = len(messages) > 0
+        for job_message in messages:
+            logger.info(f"Processing message {str(job_message)}")
+            job = json.loads(job_message.body)
+            logger.info(f"Processing job {str(job)}")
+            process_job(rule_name, aws, os.path.join(workdir, job["entry"]["publicId"], str(int(time.time()))), job)
+            job_message.delete()
 
 
 def main(rule_name):

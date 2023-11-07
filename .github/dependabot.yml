@@ -1,0 +1,22 @@
+version: 2
+updates:
+  # Keep Maven dependencies up to date
+  - package-ecosystem: "maven"
+    directory: "/ecs-tasks/netex2gtfs-entur-v2.0.6"
+    schedule:
+      interval: "monthly"
+    reviewers:
+      - "tmfg/digitraffic-tis-solita"
+  - package-ecosystem: "maven"
+    directory: "/ecs-tasks/netex-entur-v1.0.1"
+    schedule:
+      interval: "monthly"
+    reviewers:
+      - "tmfg/digitraffic-tis-solita"
+  # keep used GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    reviewers:
+      - "tmfg/digitraffic-tis-solita"

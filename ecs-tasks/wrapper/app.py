@@ -36,8 +36,9 @@ def download_s3_folder(s3_resource, bucket_name, s3_folder, local_dir):
             os.makedirs(os.path.dirname(target))
         if obj.key[-1] == '/':
             continue
-        logger.info(f"Downloading file to {target} from s3://{bucket_name}/{prefix}")
-        bucket.download_file(obj.key, target)
+        logger.info(f"Downloading file to {target} from s3://{bucket_name}/{obj.key}")
+        with open(target, 'wb') as data:
+            bucket.download_fileobj(obj.key, data)
     return local_dir
 
 
@@ -79,8 +80,13 @@ def process_job(rule_name, aws, workdir, job):
                        s3_input_uri.authority,
                        s3_input_uri.path,
                        local_dir=input_dir)
+    # save configuration to inputs if any available in job
+    configuration = job["configuration"]
+    if configuration is None:
+        with open('config.json', 'w') as config:
+            json.dump(configuration, config)
     # run command
-    outputs_meta = rule.run(input_dir, output_dir)
+    outputs_meta = rule.run(job, input_dir, output_dir)
     logger.info(f"Rule produced {outputs_meta}")
     # map of uploaded result files with list of package scopes
     uploaded_files = {}

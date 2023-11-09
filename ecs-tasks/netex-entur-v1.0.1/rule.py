@@ -5,7 +5,7 @@ import os
 logger = logging.getLogger()
 
 
-def run(input_dir, output_dir):
+def run(job, input_dir, output_dir):
     try:
         sh.java("-jar", "validation-netex-entur.jar",
                 "-i", os.path.realpath(input_dir),

@@ -80,11 +80,6 @@ def process_job(rule_name, aws, workdir, job):
                        s3_input_uri.authority,
                        s3_input_uri.path,
                        local_dir=input_dir)
-    # save configuration to inputs if any available in job
-    configuration = job["configuration"]
-    if configuration is None:
-        with open('config.json', 'w') as config:
-            json.dump(configuration, config)
     # run command
     outputs_meta = rule.run(job, input_dir, output_dir)
     logger.info(f"Rule produced {outputs_meta}")

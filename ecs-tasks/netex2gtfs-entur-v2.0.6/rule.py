@@ -1,11 +1,21 @@
 import sh
 import logging
 import os
+import json
 
 logger = logging.getLogger()
 
 
 def run(job, input_dir, output_dir):
+    # save configuration to inputs if any available in job
+    configuration = job["configuration"]
+
+    with open(os.path.join(input_dir, 'config.json'), 'w') as config_file:
+        json.dump(configuration | {
+            'timetableDataset': 'netex.zip',
+            'stopsAndQuaysDataset': 'stopsAndQuays.zip'
+        }, config_file)
+
     try:
         sh.java("-jar", "conversion-netex2gtfs-entur.jar",
                 "-i", os.path.realpath(input_dir),

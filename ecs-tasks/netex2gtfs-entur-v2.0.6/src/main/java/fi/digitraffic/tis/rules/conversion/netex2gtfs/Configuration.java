@@ -1,14 +1,13 @@
 package fi.digitraffic.tis.rules.conversion.netex2gtfs;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
-import java.io.InputStream;
-
 @Value.Immutable
+@JsonSerialize(as = ImmutableConfiguration.class)
+@JsonDeserialize(as = ImmutableConfiguration.class)
 public interface Configuration {
-    Configuration DEFAULTS = ImmutableConfiguration.builder()
-            .codespace("FIN")
-            .build();
 
     /**
      * The NeTEx codespace of the timetable data provider.
@@ -20,11 +19,11 @@ public interface Configuration {
      * A NeTEx dataset containing the timetable data.
      * @return Dataset as ready to use InputStream
      */
-    InputStream timetableDataset();
+    String timetableDataset();
 
     /**
      * A NeTEx dataset containing the full definition of the StopPlaces and Quays referred from the timetable data.
      * @return Dataset as ready to use InputStream
      */
-    InputStream stopsAndQuaysDataset();
+    String stopsAndQuaysDataset();
 }

@@ -7,7 +7,7 @@ logger = logging.getLogger()
 
 def run(input_dir, output_dir):
     try:
-        sh.java("-jar", "conversion-netex-entur.jar",
+        sh.java("-jar", "conversion-netex2gtfs-entur.jar",
                 "-i", os.path.realpath(input_dir),
                 "-o", os.path.realpath(output_dir))
         return {

@@ -13,13 +13,16 @@ class Arguments {
             description = "Local path for inputs")
     public Path inputPath;
 
-    @Parameter(names = {"-f", "--file"},
-            required = false,
-            description = "Exact name of the input file (without local path prefix)")
-    public String fileName;
-
     @Parameter(names = {"-o", "--output"},
             required = true,
             description = "Local path for outputs")
     public Path outputPath;
+
+    @Override
+    public String toString() {
+        return "Arguments{" +
+                "inputPath=" + inputPath +
+                ", outputPath=" + outputPath +
+                '}';
+    }
 }

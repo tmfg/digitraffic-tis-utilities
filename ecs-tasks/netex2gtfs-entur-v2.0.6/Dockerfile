@@ -5,7 +5,7 @@ RUN mvn package -DskipTests
 FROM debian:bookworm-slim
 COPY --from=python:3.11-slim-bookworm / /
 COPY --from=openjdk:21-slim-bookworm / /
-COPY --from=build /target/conversion-netex-entur-2.0.6-jar-with-dependencies.jar /conversion-netex-entur.jar
+COPY --from=build /target/conversion-netex2gtfs-entur-2.0.6-jar-with-dependencies.jar /conversion-netex2gtfs-entur.jar
 
 ### copy of ENVs from merged images
 # python:3.11-slim-bookworm
@@ -23,7 +23,7 @@ WORKDIR /
 # add generic wrapper
 ADD ./wrapper /
 # add rule specific override, will override parts of wrapper
-ADD ./netex-entur-v2.0.6/rule.py /
+ADD ./netex2gtfs-entur-v2.0.6/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 ENTRYPOINT ["python", "app.py", "--rule-name", "netex2gtfs.entur.v2_0_6"]

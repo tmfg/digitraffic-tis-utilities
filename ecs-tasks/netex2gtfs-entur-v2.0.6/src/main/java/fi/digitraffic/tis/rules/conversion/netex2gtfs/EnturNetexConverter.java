@@ -4,6 +4,11 @@ import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import fi.digitraffic.tis.rules.ConfigurationException;
+import fi.digitraffic.tis.rules.InvalidConfigurationException;
+import fi.digitraffic.tis.rules.MissingConfigurationException;
+import fi.digitraffic.tis.rules.RuleException;
+import fi.digitraffic.tis.rules.conversion.ConversionException;
 import org.entur.netex.gtfs.export.DefaultGtfsExporter;
 import org.entur.netex.gtfs.export.GtfsExporter;
 import org.entur.netex.gtfs.export.stop.DefaultStopAreaRepository;
@@ -45,47 +50,68 @@ public class EnturNetexConverter {
     }
 
     private void run(Arguments arguments) {
-        Configuration conf = validateConfiguration(arguments.inputPath.resolve("config.json"));
-        Path netexSource = arguments.inputPath.resolve(
-                arguments.fileName != null
-                        ? arguments.fileName
-                        : "netex.zip");
-        convert(conf, netexSource, arguments.outputPath);
+        Configuration conf;
+        try {
+            conf = validateConfiguration(arguments.inputPath.resolve("config.json"));
+        } catch (ConfigurationException e) {
+            logger.error("Failed to validate configuration, cannot continue", e);
+            return;
+        }
+        try {
+            convert(conf, arguments.outputPath);
+        } catch (RuleException e) {
+            logger.error("Failed to run GTFS to NeTEx conversion for " + arguments, e);
+        }
     }
 
-    private Configuration validateConfiguration(Path configuration) {
+    private Configuration validateConfiguration(Path configuration) throws ConfigurationException {
         if (Files.exists(configuration)) {
             try {
                 return objectMapper.readValue(configuration.toFile(), Configuration.class);
             } catch (IOException e) {
-                throw new RuntimeException("Failed to read in configuration class, possibly malformed input?", e);
+                throw new InvalidConfigurationException("Failed to read in configuration class, possibly malformed input?", e);
             }
         } else {
-            return Configuration.DEFAULTS;
+            throw new MissingConfigurationException("Expected to find configuration from path '" + configuration + "'");
         }
     }
 
     private void convert(Configuration configuration,
-                         Path netexSource,
-                         Path outputsDirectory) {
+                         Path outputsDirectory) throws ConversionException {
         // input stream pointing to a zip archive containing the NeTEX stops and quays definitions.
-        InputStream stopsAndQuaysDataset = configuration.stopsAndQuaysDataset();
+        InputStream stopsAndQuaysDataset;
+        try {
+            stopsAndQuaysDataset = Files.newInputStream(Path.of(configuration.stopsAndQuaysDataset()));
+        } catch (IOException e) {
+            throw new ConversionException("Could not read stops and quats dataset file from '" + configuration.stopsAndQuaysDataset() + "'", e);
+        }
         DefaultStopAreaRepository defaultStopAreaRepository = new DefaultStopAreaRepository();
         defaultStopAreaRepository.loadStopAreas(stopsAndQuaysDataset);
         // input stream pointing to a zip archive containing the NeTEX timetable data.
-        InputStream netexTimetableDataset = configuration.timetableDataset();
+        InputStream netexTimetableDataset;
+        try {
+            netexTimetableDataset = Files.newInputStream(Path.of(configuration.timetableDataset()));
+        } catch (IOException e) {
+            throw new ConversionException("Could not read timetable dataset file from '" + configuration.timetableDataset() + "'", e);
+        }
         // NeTEX codespace for the timetable data provider.
         String codespace = configuration.codespace();
 
         GtfsExporter gtfsExport = new DefaultGtfsExporter(codespace, defaultStopAreaRepository);
 
         // the returned Inputstream points to a GTFS zip archive
-        InputStream exportedGtfs = gtfsExport.convertTimetablesToGtfs(netexTimetableDataset);
+
+        InputStream exportedGtfs;
+        try {
+            exportedGtfs = gtfsExport.convertTimetablesToGtfs(netexTimetableDataset);
+        } catch (RuntimeException e) {
+            throw new ConversionException("Failed to convert NeTEx timetable data to GTFS", e);
+        }
 
         try {
-            Files.copy(exportedGtfs, outputsDirectory.resolve("gtfs.zip"));
+            Files.copy(exportedGtfs, Files.createFile(outputsDirectory.resolve("gtfs.zip")));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new ConversionException("Cannot ouput exported GTFS to file", e);
         }
     }
 

@@ -5,7 +5,7 @@ import os
 logger = logging.getLogger()
 
 
-def run(input_dir, output_dir):
+def run(job, input_dir, output_dir):
     try:
         sh.java("-jar", "gtfs-validator-cli.jar",
                 "-i", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),

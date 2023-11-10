@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import tempfile
+import time
 from logging.config import fileConfig
 
 import boto3
@@ -35,8 +36,9 @@ def download_s3_folder(s3_resource, bucket_name, s3_folder, local_dir):
             os.makedirs(os.path.dirname(target))
         if obj.key[-1] == '/':
             continue
-        logger.info(f"Downloading file to {target} from s3://{bucket_name}/{prefix}")
-        bucket.download_file(obj.key, target)
+        logger.info(f"Downloading file to {target} from s3://{bucket_name}/{obj.key}")
+        with open(target, 'wb') as data:
+            bucket.download_fileobj(obj.key, data)
     return local_dir
 
 
@@ -79,7 +81,7 @@ def process_job(rule_name, aws, workdir, job):
                        s3_input_uri.path,
                        local_dir=input_dir)
     # run command
-    outputs_meta = rule.run(input_dir, output_dir)
+    outputs_meta = rule.run(job, input_dir, output_dir)
     logger.info(f"Rule produced {outputs_meta}")
     # map of uploaded result files with list of package scopes
     uploaded_files = {}
@@ -151,12 +153,17 @@ def run_task(workdir, rule_name):
     }
 
     job_queue = aws['sqs']['resource'].get_queue_by_name(QueueName=munge(rule_name))  # TODO: the correct name
-    for job_message in job_queue.receive_messages(MaxNumberOfMessages=1):
-        logger.info(f"Processing message {str(job_message)}")
-        job = json.loads(job_message.body)
-        logger.info(f"Processing job {str(job)}")
-        process_job(rule_name, aws, workdir, job)
-        job_message.delete()
+
+    contains_messages = True
+    while contains_messages:
+        messages = job_queue.receive_messages(MaxNumberOfMessages=1)
+        contains_messages = len(messages) > 0
+        for job_message in messages:
+            logger.info(f"Processing message {str(job_message)}")
+            job = json.loads(job_message.body)
+            logger.info(f"Processing job {str(job)}")
+            process_job(rule_name, aws, os.path.join(workdir, job["entry"]["publicId"], str(int(time.time()))), job)
+            job_message.delete()
 
 
 def main(rule_name):

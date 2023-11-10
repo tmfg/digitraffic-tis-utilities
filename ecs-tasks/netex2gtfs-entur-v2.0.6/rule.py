@@ -13,7 +13,8 @@ def run(job, input_dir, output_dir):
         configuration = dict()
 
     with open(os.path.join(input_dir, 'config.json'), 'w') as config_file:
-        json.dump(configuration | {
+        json.dump({
+            'codespace': configuration['codespace'],
             'timetableDataset': os.path.join(input_dir, 'netex.zip'),
             'stopsAndQuaysDataset': os.path.join(input_dir, 'stopsAndQuays.zip')
         }, config_file)

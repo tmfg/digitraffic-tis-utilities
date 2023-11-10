@@ -14,6 +14,8 @@ jobs:
     name: "${{matrix.package}}"
     runs-on: ubuntu-latest
 
+    if: ${{ github.actor != 'dependabot[bot]' }}
+
     defaults:
       run:
         working-directory: ./ecs-tasks

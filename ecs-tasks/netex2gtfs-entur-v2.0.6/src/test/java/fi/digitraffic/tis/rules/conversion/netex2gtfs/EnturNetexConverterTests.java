@@ -21,10 +21,14 @@ class EnturNetexConverterTests {
     private Path tempDir;
 
     private ObjectMapper objectMapper;
+    private Path input;
+    private Path output;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws IOException {
         objectMapper = new ObjectMapper();
+        input = Files.createDirectories(tempDir.resolve("input"));
+        output = Files.createDirectories(tempDir.resolve("output"));
     }
 
     @Test
@@ -35,9 +39,27 @@ class EnturNetexConverterTests {
         Path timetable = loadResource("rb_vyg-aggregated-netex.zip");
         Path stopsAndQuaus = loadResource("RailStations_latest.zip");
 
-        Path input = Files.createDirectories(tempDir.resolve("input"));
-        Path output = Files.createDirectories(tempDir.resolve("output"));
+        String[] args = generateConfiguration(input, timetable, stopsAndQuaus, output);
 
+        EnturNetexConverter.main(args);
+
+        assertThat(Files.exists(output.resolve("gtfs.zip")), equalTo(true));
+    }
+
+    @Test
+    @Tag("integration")
+    void failsGracefullyOnMissingStopData() throws URISyntaxException, IOException {
+        Path timetable = loadResource("rb_vyg-aggregated-netex.zip");
+        Path stopsAndQuaus = loadResource("emptyStopsAndQuays.zip");
+
+        String[] args = generateConfiguration(input, timetable, stopsAndQuaus, output);
+
+        EnturNetexConverter.main(args);
+
+        assertThat(Files.exists(output.resolve("gtfs.zip")), equalTo(false));
+    }
+
+    private String[] generateConfiguration(Path input, Path timetable, Path stopsAndQuaus, Path output) throws IOException {
         Path config = Files.writeString(
                 Files.createFile(input.resolve("config.json")),
                 objectMapper.writeValueAsString(
@@ -48,11 +70,7 @@ class EnturNetexConverterTests {
         String[] args = {
                 "--input", input.toString(),
                 "--output", output.toString()};
-
-        EnturNetexConverter.main(args);
-
-        Path gtfs = output.resolve("gtfs.zip");
-        assertThat(Files.exists(gtfs), equalTo(true));
+        return args;
     }
 
     private static Path loadResource(String name) throws URISyntaxException {

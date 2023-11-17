@@ -1,0 +1,47 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+autonumber
+
+actor "New User"
+boundary "VACO UI"
+boundary "VACO API"
+database "database"
+boundary "Azure AD"
+
+"New User" -> "VACO UI" : navigates to UI
+"VACO UI" -> "VACO UI" : user initiates login
+"VACO UI" -> "Azure AD" : redirect to Azure AD
+"Azure AD" --> "VACO UI" : returns valid token with authentication info
+"VACO UI" --> "New User" : shows new user registration confirmation
+
+alt VACO is given permission
+
+    "New User" -> "VACO UI" : user accepts
+    "VACO UI" -> "VACO API" : request organization membership info
+    "VACO API" -> "database" : query user's group GUIDs from database for matching business id:s
+    "database" --> "VACO API" : respond with known GUID-to-business id mappings
+
+    group Admin group registration
+        alt manual process
+            "VACO API" -> "database" : record unknown GUIDs as potentially unknown organizations
+            "VACO API" -> "VACO API" : generate admin task for registering the groups
+        else automated process
+            "VACO API" -> "Azure AD" : query directory extension for unknown GUIDs to lookup business id:s
+            "Azure AD" --> "VACO API" : respond with directory extension data for Fintraffic ID managed groups
+            "VACO API" -> "database" : update known organizations with matching business id:s with their Azure AD GUIDs
+            "VACO API" -> "VACO API" : add newly resolved organizations to previously resolved organization memberships
+        end
+    end
+
+    "VACO API" --> "VACO UI" : respond with known organization memberships
+    "VACO UI" --> "New User" : allow user to interact with the UI
+
+else VACO is denied permission
+
+    "New User" -> "VACO UI" : user declines
+    "VACO UI" --> "New User" : block user access
+
+end
+
+@enduml

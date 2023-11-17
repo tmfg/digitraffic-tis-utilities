@@ -18,8 +18,6 @@ class EnturNetexValidatorTests {
 
         Files.createDirectories(output);
 
-        System.out.println("output = " + output);
-
         String[] args = {
                 "--input", input.getParent().toString(),
                 "--file", input.getFileName().toString(),

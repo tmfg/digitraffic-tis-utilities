@@ -8,6 +8,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  packages: read
 
 jobs:
   BuildAndPushImagesToECR:
@@ -47,6 +48,13 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
         with:
           mask-password: 'true'
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract CURRENT version
         id: version

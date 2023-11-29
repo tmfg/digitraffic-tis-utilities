@@ -27,6 +27,7 @@ jobs:
           - gtfs-canonical-v4.1.0
           - netex-entur-v1.0.1
           - netex2gtfs-entur-v2.0.6
+          - gtfs2netex-fintraffic-v1.0.0
 
     steps:
       - name: Checkout Repository

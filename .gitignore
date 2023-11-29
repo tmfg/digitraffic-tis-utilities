@@ -1,3 +1,9 @@
+# various IDE temp directories etc.
+target/
+out/
+build/
+node_modules/
+
 # JetBrains IDE metadata
 *.iml
 .idea/

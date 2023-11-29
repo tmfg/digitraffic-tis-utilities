@@ -6,14 +6,13 @@ default:
   @just --list --justfile {{justfile()}}
 
 # Build rule container identified by its name.
-[private]
 build rulename:
-  docker build -t ecs-task-{{rulename}} -f ./{{rulename}}/Dockerfile .
+  docker build --platform linux/amd64 -t ecs-task-{{rulename}} -f ./{{rulename}}/Dockerfile .
 
 # Execute rule container identified by its name.
 [private]
 execute rulename:
-  docker run \
+  docker run --platform linux/amd64 \
     --rm \
     --network=tis_tis \
     -e LOCALSTACK_ENDPOINT_URL=http://localstack:4566 \
@@ -24,7 +23,7 @@ run rule: (build rule) (execute rule)
 
 # Shell into rule container. Useful for debugging.
 shell rulename: (build rulename)
-  docker run \
+  docker run --platform linux/amd64 \
     --rm \
     -it \
     --entrypoint /bin/bash \

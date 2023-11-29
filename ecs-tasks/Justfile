@@ -21,3 +21,11 @@ execute rulename:
 
 # Run specific rule identified by its directory name
 run rule: (build rule) (execute rule)
+
+# Shell into rule container. Useful for debugging.
+shell rulename: (build rulename)
+  docker run \
+    --rm \
+    -it \
+    --entrypoint /bin/bash \
+    ecs-task-{{rulename}}

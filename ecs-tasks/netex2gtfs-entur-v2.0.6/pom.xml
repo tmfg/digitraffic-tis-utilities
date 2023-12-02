@@ -31,7 +31,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- BOM properties -->
         <immutables.version>2.10.0</immutables.version>
-        <jackson.version>2.14.2</jackson.version>
+        <jackson.version>2.16.0</jackson.version>
         <junit.version>5.10.1</junit.version>
         <!-- library properties -->
         <hamcrest.version>2.2</hamcrest.version>

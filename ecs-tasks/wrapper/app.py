@@ -114,8 +114,8 @@ def process_job(rule_name, aws, workdir, job):
         'uploadedFiles': uploaded_files
     }
     sqs_resource = aws['sqs']['resource']
-    errors_queue = sqs_resource.get_queue_by_name(QueueName='rules-results')
-    errors_queue.send_message(MessageBody=json.dumps(result_message))
+    results_queue = sqs_resource.get_queue_by_name(QueueName='rules-results')
+    results_queue.send_message(MessageBody=json.dumps(result_message))
 
 
 def get_aws_resource(resource_name):

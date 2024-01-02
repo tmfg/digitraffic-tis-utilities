@@ -1,4 +1,4 @@
-FROM maven:3.9.4-eclipse-temurin-17-focal AS build
+FROM maven:3.9.6-eclipse-temurin-21-jammy AS build
 COPY ./netex2gtfs-entur-v2.0.6 /
 RUN mvn package -DskipTests
 

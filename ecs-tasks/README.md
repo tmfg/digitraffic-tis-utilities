@@ -43,6 +43,6 @@ Default output format [None]:
 ```
 
 ---
-
+ 
 Copyright Fintraffic 2023-2024. Licensed under the EUPL-1.2 or later.
 

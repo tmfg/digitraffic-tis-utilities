@@ -1,5 +1,5 @@
 FROM maven:3.9.6-eclipse-temurin-21-jammy AS build
-COPY ./netex2gtfs-entur-v2.0.6 /
+COPY ./netex2gtfs-entur /
 RUN mvn package -DskipTests
 
 FROM debian:bookworm-slim
@@ -23,7 +23,7 @@ WORKDIR /
 # add generic wrapper
 ADD ./wrapper /
 # add rule specific override, will override parts of wrapper
-ADD ./netex2gtfs-entur-v2.0.6/rule.py /
+ADD ./netex2gtfs-entur/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-ENTRYPOINT ["python", "app.py", "--rule-name", "netex2gtfs.entur.v2_0_6"]
+ENTRYPOINT ["python", "app.py", "--rule-name", "netex2gtfs.entur"]

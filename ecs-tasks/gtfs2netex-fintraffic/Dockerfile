@@ -21,9 +21,9 @@ WORKDIR /
 # add generic wrapper
 ADD ./wrapper /
 # add rule specific override, will override parts of wrapper
-ADD ./gtfs2netex-fintraffic-v1.0.0/rule.py /
+ADD ./gtfs2netex-fintraffic/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 RUN apk add bash
 
-ENTRYPOINT ["python", "app.py", "--rule-name", "gtfs2netex.fintraffic.v1_0_0"]
+ENTRYPOINT ["python", "app.py", "--rule-name", "gtfs2netex.fintraffic"]

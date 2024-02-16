@@ -1,5 +1,5 @@
 FROM maven:3.9.6-eclipse-temurin-21-jammy AS build
-COPY ./netex-entur-v1.0.1 /
+COPY ./netex-entur /
 RUN mvn package -DskipTests
 
 FROM debian:bookworm-slim
@@ -23,7 +23,7 @@ WORKDIR /
 # add generic wrapper
 ADD ./wrapper /
 # add rule specific override, will override parts of wrapper
-ADD ./netex-entur-v1.0.1/rule.py /
+ADD ./netex-entur/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-ENTRYPOINT ["python", "app.py", "--rule-name", "netex.entur.v1_0_1"]
+ENTRYPOINT ["python", "app.py", "--rule-name", "netex.entur"]

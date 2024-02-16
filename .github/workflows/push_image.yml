@@ -24,11 +24,10 @@ jobs:
     strategy:
       matrix:
         package:
-          - gtfs-canonical-v4.0.0
-          - gtfs-canonical-v4.1.0
-          - netex-entur-v1.0.1
-          - netex2gtfs-entur-v2.0.6
-          - gtfs2netex-fintraffic-v1.0.0
+          - gtfs-canonical
+          - netex-entur
+          - netex2gtfs-entur
+          - gtfs2netex-fintraffic
 
     steps:
       - name: Checkout Repository

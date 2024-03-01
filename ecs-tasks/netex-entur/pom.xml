@@ -30,7 +30,7 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- BOM properties -->
-        <immutables.version>2.10.0</immutables.version>
+        <immutables.version>2.10.1</immutables.version>
         <jackson.version>2.16.1</jackson.version>
         <junit.version>5.10.2</junit.version>
         <!-- library properties -->

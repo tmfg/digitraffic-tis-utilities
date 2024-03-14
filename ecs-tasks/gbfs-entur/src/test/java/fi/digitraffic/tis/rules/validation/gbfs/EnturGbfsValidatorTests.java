@@ -1,5 +1,6 @@
 package fi.digitraffic.tis.rules.validation.gbfs;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -10,6 +11,7 @@ import java.nio.file.Paths;
 
 class EnturGbfsValidatorTests {
 
+    @Disabled("GBFS is hard to test locally due to its autodiscovery component, so this test - which is a copy from Entur's NeTEx validator - is left as a marker for future")
     @Test
     void canValidateConvertedWalttiData() throws URISyntaxException, IOException {
         Path input = Path.of(Thread.currentThread().getContextClassLoader().getResource("waltti_netex_nordic.zip").toURI());

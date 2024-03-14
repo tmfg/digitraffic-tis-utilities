@@ -8,7 +8,7 @@
     <version>1.0.1</version>
     <packaging>jar</packaging>
 
-    <name>Entur NeTEx Nordic Validator 1.0.1</name>
+    <name>Digitraffic TIS / VACO / Entur GBFS Nordic Validator</name>
     <description>Maven wrapper for downloading Entur NeTEx Nordic Validator 1.0.1 and all of its dependencies for further packaging into a container with the Dockerfile present in this directory.</description>
     <inceptionYear>2023</inceptionYear>
     <licenses>

@@ -98,7 +98,7 @@ public class EnturNetexValidator {
                         ValidationReport vr = validateNetexEntry(configuration, netexValidatorsRunner, zipEntry, bytes);
                             report = report.validationReport(vr);
                         } catch (CorruptEntryException e) {
-                            report.addErrors(serializeThrowable(e));
+                            report = report.addErrors(serializeThrowable(e));
                         }
                         return report.build();
                     }).toList();

@@ -1,4 +1,4 @@
-package fi.digitraffic.tis.rules.validation.netex;
+package fi.digitraffic.tis.rules.validation.gbfs;
 
 import com.beust.jcommander.JCommander;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,14 +7,14 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import fi.digitraffic.tis.rules.CorruptEntryException;
 import fi.digitraffic.tis.rules.RuleException;
-import org.entur.netex.validation.validator.NetexValidatorsRunner;
-import org.entur.netex.validation.validator.ValidationReport;
-import org.entur.netex.validation.validator.schema.NetexSchemaValidator;
-import org.entur.netex.validation.xml.NetexXMLParser;
+import org.entur.gbfs.validation.GbfsValidator;
+import org.entur.gbfs.validation.GbfsValidatorFactory;
+import org.entur.gbfs.validation.model.FileValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -24,9 +24,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
- * Wrapper class for running Entur's NeTEx validator based on the unified file based interface of external rules.
+ * Wrapper class for running Entur's GBFS validator based on the unified file based interface of external rules.
  */
-public class EnturNetexValidator {
+public class EnturGbfsValidator {
 
     public static void main(String[] args) {
         Arguments arguments = new Arguments();
@@ -34,7 +34,7 @@ public class EnturNetexValidator {
                 .addObject(arguments)
                 .build()
                 .parse(args);
-        EnturNetexValidator validator = new EnturNetexValidator();
+        EnturGbfsValidator validator = new EnturGbfsValidator();
         validator.run(arguments);
     }
 
@@ -42,7 +42,7 @@ public class EnturNetexValidator {
 
     private final ObjectMapper objectMapper;
 
-    public EnturNetexValidator() {
+    public EnturGbfsValidator() {
         objectMapper = initObjectMapper();
     }
 
@@ -55,12 +55,12 @@ public class EnturNetexValidator {
 
     private void run(Arguments arguments) {
         Configuration conf = validateConfiguration(arguments.inputPath.resolve("config.json"));
-        Path netexSource = arguments.inputPath.resolve(
+        Path gbfsSource = arguments.inputPath.resolve(
                 arguments.fileName != null
                         ? arguments.fileName
-                        : "netex.zip");
+                        : "gbfs.zip");
         try {
-            validateNetex(conf, netexSource, arguments.outputPath);
+            validateGbfs(conf, gbfsSource, arguments.outputPath);
         } catch (RuleException e) {
             logger.error("Failed to process provided file", e);
         }
@@ -78,14 +78,12 @@ public class EnturNetexValidator {
         }
     }
 
-    private void validateNetex(Configuration configuration,
-                               Path netexSource,
-                               Path outputsDirectory) throws RuleException {
+    private void validateGbfs(Configuration configuration,
+                              Path gbfsSource,
+                              Path outputsDirectory) throws RuleException {
 
-        try (ZipFile zipFile = toZipFile(netexSource)) {
-            NetexXMLParser netexXMLParser = new NetexXMLParser(configuration.ignorableNetexElements());
-            NetexSchemaValidator netexSchemaValidator = new NetexSchemaValidator(configuration.maximumErrors());
-            NetexValidatorsRunner netexValidatorsRunner = new NetexValidatorsRunner(netexXMLParser, netexSchemaValidator, List.of());
+        GbfsValidator validator = GbfsValidatorFactory.getGbfsJsonValidator();
+        try (ZipFile zipFile = toZipFile(gbfsSource)) {
 
             List<ImmutableReport> reports = zipFile.stream()
                     .filter(e -> !e.isDirectory())
@@ -94,9 +92,9 @@ public class EnturNetexValidator {
                         ImmutableReport.Builder report = ImmutableReport.builder()
                                 .entry(zipEntry.getName());
                         try {
-                            byte[] bytes = getEntryContents(zipFile, zipEntry);
-                        ValidationReport vr = validateNetexEntry(configuration, netexValidatorsRunner, zipEntry, bytes);
-                            report = report.validationReport(vr);
+                            InputStream contents = getEntryContents(zipFile, zipEntry);
+                            FileValidationResult fvr = validateGbfsEntry(configuration, validator, zipEntry, contents);
+                            report = report.fileValidationResult(fvr);
                         } catch (CorruptEntryException e) {
                             report = report.addErrors(serializeThrowable(e));
                         }
@@ -104,7 +102,7 @@ public class EnturNetexValidator {
                     }).toList();
             produceReports(outputsDirectory, reports);
         } catch (IOException e) {
-            throw new RuleException("Failed to close ZIP stream " + netexSource + " gracefully", e);
+            throw new RuleException("Failed to close ZIP stream " + gbfsSource + " gracefully", e);
         }
     }
 
@@ -116,50 +114,33 @@ public class EnturNetexValidator {
         }
     }
 
-    private ZipFile toZipFile(Path netexSource) throws RuleException {
+    private ZipFile toZipFile(Path gbfsSource) throws RuleException {
         ZipFile zipFile;
         try {
-            logger.debug("Processing {} as ZIP file", netexSource);
-            zipFile = new ZipFile(netexSource.toFile());
+            logger.debug("Processing {} as ZIP file", gbfsSource);
+            zipFile = new ZipFile(gbfsSource.toFile());
         } catch (IOException e1) {
-            //errorHandlerService.reportError(
-            //        ImmutableError.of(
-            //                entry.publicId(),
-            //                task.id(),
-            //                rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
-            //                getIdentifyingName(),
-            //                message));
-            throw new RuleException("Failed to unzip provided NeTEx package " + netexSource, e1);
+            throw new RuleException("Failed to unzip provided GBFS package " + gbfsSource, e1);
         }
         return zipFile;
     }
 
-    private byte[] getEntryContents(ZipFile zipFile, ZipEntry zipEntry) throws CorruptEntryException {
-        byte[] bytes;
+    private InputStream getEntryContents(ZipFile zipFile, ZipEntry zipEntry) throws CorruptEntryException {
         try {
-            bytes = zipFile.getInputStream(zipEntry).readAllBytes();
+            return zipFile.getInputStream(zipEntry);
         } catch (IOException e) {
-            //errorHandlerService.reportError(
-            //        ImmutableError.of(
-            //                entry.publicId(),
-            //                task.id(),
-            //                rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
-            //                getIdentifyingName(),
-            //                message));
-            throw new CorruptEntryException("Failed to access file " + zipEntry.getName() + " within provided NeTEx package " + zipFile.getName(), e);
+            throw new CorruptEntryException("Failed to access file " + zipEntry.getName() + " within provided GBFS package " + zipFile.getName(), e);
         }
-        return bytes;
     }
 
-    private ValidationReport validateNetexEntry(Configuration configuration,
-                                                NetexValidatorsRunner netexValidatorsRunner,
-                                                ZipEntry zipEntry,
-                                                byte[] bytes) {
-        return netexValidatorsRunner.validate(
-                configuration.codespace(),
-                configuration.reportId(),
-                zipEntry.getName(),
-                bytes);
+    private FileValidationResult validateGbfsEntry(Configuration configuration,
+                                                   GbfsValidator gbfsValidator,
+                                                   ZipEntry zipEntry,
+                                                   InputStream contents) {
+        logger.info("Validating {}", zipEntry.getName());
+        // feed name is file name without the .json
+        String feedName = zipEntry.getName().substring(0, zipEntry.getName().length() - ".json".length());
+        return gbfsValidator.validateFile(feedName, contents);
     }
 
     private static String serializeThrowable(Throwable e) {

@@ -1,0 +1,36 @@
+{
+  "last_updated": 1710339660,
+  "ttl": 0,
+  "version": "2.3",
+  "data": {
+    "en": {
+      "feeds": [
+        {
+          "name": "system_information",
+          "url": "https://tkhslahtistorage.blob.core.windows.net/gbfs/system_information.json"
+        },
+        {
+          "name": "station_information",
+          "url": "https://tkhslahtistorage.blob.core.windows.net/gbfs/station_information.json"
+        },
+        {
+          "name": "vehicle_types",
+          "url": "https://tkhslahtistorage.blob.core.windows.net/gbfs/vehicle_types.json"
+        },
+        {
+          "name": "station_status",
+          "url": "https://tkhslahtistorage.blob.core.windows.net/gbfs/station_status.json"
+        },
+        {
+          "name": "free_bike_status",
+          "url": "https://tkhslahtistorage.blob.core.windows.net/gbfs/free_bike_status.json"
+        },
+        {
+          "name": "system_pricing_plans",
+          "url": "https://tkhslahtistorage.blob.core.windows.net/gbfs/system_pricing_plans.json"
+        }
+      ]
+    }
+  }
+}
+

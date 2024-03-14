@@ -13,6 +13,12 @@ updates:
       interval: "monthly"
     reviewers:
       - "tmfg/digitraffic-tis-solita"
+  - package-ecosystem: "maven"
+    directory: "/ecs-tasks/gbfs-entur"
+    schedule:
+      interval: "monthly"
+    reviewers:
+      - "tmfg/digitraffic-tis-solita"
   # keep used GitHub Actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"

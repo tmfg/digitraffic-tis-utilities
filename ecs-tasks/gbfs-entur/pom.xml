@@ -4,13 +4,13 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>fi.digitraffic.tis.rules</groupId>
-    <artifactId>validation-netex-entur</artifactId>
-    <version>1.0.1</version>
+    <artifactId>validation-gbfs-entur</artifactId>
+    <version>${gbfs.validator.version}</version>
     <packaging>jar</packaging>
 
     <name>Digitraffic TIS / VACO / Entur GBFS Nordic Validator</name>
-    <description>Maven wrapper for downloading Entur NeTEx Nordic Validator 1.0.1 and all of its dependencies for further packaging into a container with the Dockerfile present in this directory.</description>
-    <inceptionYear>2023</inceptionYear>
+    <description>Maven wrapper for downloading Entur GBFS Validator and all of its dependencies for further packaging into a container with the Dockerfile present in this directory.</description>
+    <inceptionYear>2024</inceptionYear>
     <licenses>
         <license>
             <name>EUPL-1.2</name>
@@ -37,6 +37,7 @@
         <hamcrest.version>2.2</hamcrest.version>
         <junit5.version>5.9.2</junit5.version>
         <mockito.version>5.11.0</mockito.version>
+        <gbfs.validator.version>1.0.23</gbfs.validator.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <!-- Maven plugin properties -->
@@ -118,11 +119,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Entur NeTEx Validator -->
+        <!-- Entur GBFS Validator -->
         <dependency>
-            <groupId>org.entur</groupId>
-            <artifactId>netex-validator-java</artifactId>
-            <version>2.0.5</version>
+            <groupId>org.entur.gbfs</groupId>
+            <artifactId>gbfs-validator-java</artifactId>
+            <version>${gbfs.validator.version}</version>
         </dependency>
 
         <!-- testing -->
@@ -175,7 +176,7 @@
                         <configuration>
                             <archive>
                                 <manifest>
-                                    <mainClass>fi.digitraffic.tis.rules.validation.netex.EnturNetexValidator</mainClass>
+                                    <mainClass>fi.digitraffic.tis.rules.validation.gbfs.EnturGbfsValidator</mainClass>
                                 </manifest>
                             </archive>
                             <descriptorRefs>

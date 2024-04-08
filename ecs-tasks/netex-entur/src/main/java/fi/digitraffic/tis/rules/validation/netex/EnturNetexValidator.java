@@ -55,15 +55,25 @@ public class EnturNetexValidator {
 
     private void run(Arguments arguments) {
         Configuration conf = validateConfiguration(arguments.inputPath.resolve("config.json"));
-        Path netexSource = arguments.inputPath.resolve(
-                arguments.fileName != null
-                        ? arguments.fileName
-                        : "netex.zip");
+        Path netexSource = findInputFile(arguments);
         try {
             validateNetex(conf, netexSource, arguments.outputPath);
         } catch (RuleException e) {
             logger.error("Failed to process provided file", e);
         }
+    }
+
+    private static Path findInputFile(Arguments arguments) {
+        // lookup alternatives: gtfs2netex may run this task as transitive, in which case we want to use its input
+        Path converterInput = arguments.inputPath.resolve("gtfs2netex.fintraffic/result.zip");
+        if (Files.exists(converterInput)) {
+            return converterInput;
+        }
+        // use generic input
+        String fileName = arguments.fileName != null
+                ? arguments.fileName
+                : "netex.zip";
+        return arguments.inputPath.resolve(fileName);
     }
 
     private Configuration validateConfiguration(Path configuration) {

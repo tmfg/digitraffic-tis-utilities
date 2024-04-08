@@ -37,7 +37,7 @@
         <hamcrest.version>2.2</hamcrest.version>
         <junit5.version>5.9.2</junit5.version>
         <mockito.version>5.11.0</mockito.version>
-        <gbfs.validator.version>1.0.25</gbfs.validator.version>
+        <gbfs.validator.version>1.0.26</gbfs.validator.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <!-- Maven plugin properties -->

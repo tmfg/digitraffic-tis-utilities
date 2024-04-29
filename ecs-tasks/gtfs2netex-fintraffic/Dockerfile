@@ -1,17 +1,17 @@
-FROM alpine:3.18
+FROM alpine:3.19
 
-COPY --from=python:3.11.6-alpine3.18 / /
-COPY --from=node:19.9.0-alpine / /
-COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.25.0 /usr/src/app/ /
+COPY --from=python:3.11.9-alpine3.19 / /
+COPY --from=node:20-alpine3.19 / /
+COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.26.0 /usr/src/app/ /
 
 ### copy of ENVs from merged images
-# python:3.11.6-alpine3.18
+# python:3.11.9-alpine3.19
 ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV PATH /usr/local/bin:$PATH
-ENV PYTHON_VERSION=3.11.6
-ENV PYTHON_PIP_VERSION=23.2.1
-# node:19.9.0-alpine
-ENV NODE_VERSION=19.9.0
+ENV PYTHON_VERSION=3.11.9
+ENV PYTHON_PIP_VERSION=24.0
+# node:20-alpine3.19
+ENV NODE_VERSION=20.12.2
 ENV YARN_VERSION=1.22.19
 # both
 ENV LANG=C.UTF-8
@@ -24,6 +24,7 @@ ADD ./wrapper /
 ADD ./gtfs2netex-fintraffic/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
-RUN apk add bash
+RUN apk add bash \
+    && apk cache clean
 
 ENTRYPOINT ["python", "app.py", "--rule-name", "gtfs2netex.fintraffic"]

@@ -8,7 +8,7 @@
     <version>${gbfs.validator.version}</version>
     <packaging>jar</packaging>
 
-    <name>Digitraffic TIS / VACO / Entur GBFS Nordic Validator</name>
+    <name>Digitraffic TIS / VACO / Entur GBFS Validator</name>
     <description>Maven wrapper for downloading Entur GBFS Validator and all of its dependencies for further packaging into a container with the Dockerfile present in this directory.</description>
     <inceptionYear>2024</inceptionYear>
     <licenses>

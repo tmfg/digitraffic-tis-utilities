@@ -21,7 +21,8 @@ def run(job, input_dir, output_dir):
             'stdout.log': ['debug'],
             'stderr.log': ['debug'],
             'report.json': ['report'],
-            'report.html': ['report']
+            'report.html': ['report'],
+            'errors.json': ['debug']
         }
         return {**routes, **stops, **stats, **defaults}
     except sh.ErrorReturnCode as e:

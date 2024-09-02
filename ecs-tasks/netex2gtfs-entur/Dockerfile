@@ -5,7 +5,7 @@ RUN mvn package -DskipTests
 FROM debian:bookworm-slim
 COPY --from=python:3.11-slim-bookworm / /
 COPY --from=openjdk:21-slim-bookworm / /
-COPY --from=build /target/conversion-netex2gtfs-entur-2.0.6-jar-with-dependencies.jar /conversion-netex2gtfs-entur.jar
+COPY --from=build /target/conversion-netex2gtfs-entur-2.1.32-jar-with-dependencies.jar /conversion-netex2gtfs-entur.jar
 
 ### copy of ENVs from merged images
 # python:3.11-slim-bookworm

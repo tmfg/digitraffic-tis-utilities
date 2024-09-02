@@ -5,11 +5,11 @@
 
     <groupId>fi.digitraffic.tis.rules</groupId>
     <artifactId>validation-netex-entur</artifactId>
-    <version>1.0.1</version>
+    <version>${netex-validator.version}</version>
     <packaging>jar</packaging>
 
     <name>Digitraffic TIS / VACO / Entur NeTEx Nordic Validator</name>
-    <description>Maven wrapper for downloading Entur NeTEx Nordic Validator 1.0.1 and all of its dependencies for further packaging into a container with the Dockerfile present in this directory.</description>
+    <description>Maven wrapper for downloading Entur NeTEx Nordic Validator and all of its dependencies for further packaging into a container with the Dockerfile present in this directory.</description>
     <inceptionYear>2023</inceptionYear>
     <licenses>
         <license>
@@ -42,6 +42,7 @@
         <!-- Maven plugin properties -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
+        <netex-validator.version>2.0.24</netex-validator.version>
     </properties>
 
     <dependencyManagement>
@@ -122,7 +123,7 @@
         <dependency>
             <groupId>org.entur</groupId>
             <artifactId>netex-validator-java</artifactId>
-            <version>2.0.21</version>
+            <version>${netex-validator.version}</version>
         </dependency>
 
         <!-- testing -->

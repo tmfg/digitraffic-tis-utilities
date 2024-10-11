@@ -5,7 +5,7 @@ RUN mvn package -DskipTests
 FROM debian:bookworm-slim
 COPY --from=python:3.11-slim-bookworm / /
 COPY --from=openjdk:21-slim-bookworm / /
-COPY --from=build /target/validation-gbfs-entur-2.0.7-jar-with-dependencies.jar /validation-gbfs-entur.jar
+COPY --from=build /target/validation-gbfs-entur-2.0.9-jar-with-dependencies.jar /validation-gbfs-entur.jar
 
 ### copy of ENVs from merged images
 # python:3.11-slim-bookworm

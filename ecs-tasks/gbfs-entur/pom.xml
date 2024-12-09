@@ -184,6 +184,7 @@
                             <goal>single</goal>
                         </goals>
                         <configuration>
+                            <finalName>${project.artifactId}</finalName>
                             <archive>
                                 <manifest>
                                     <mainClass>fi.digitraffic.tis.rules.validation.gbfs.EnturGbfsValidator</mainClass>

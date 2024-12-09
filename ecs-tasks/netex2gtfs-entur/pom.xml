@@ -53,7 +53,7 @@
         <!-- Maven plugin properties -->
         <maven-compiler-plugin.version>3.13.0</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
-        <netex2gtfs-converter.version>2.1.45</netex2gtfs-converter.version>
+        <netex2gtfs-converter.version>2.1.53</netex2gtfs-converter.version>
     </properties>
 
     <dependencyManagement>

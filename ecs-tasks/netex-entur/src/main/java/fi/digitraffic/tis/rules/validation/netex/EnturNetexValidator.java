@@ -95,8 +95,12 @@ public class EnturNetexValidator {
         try (ZipFile zipFile = toZipFile(netexSource)) {
             NetexXMLParser netexXMLParser = new NetexXMLParser(configuration.ignorableNetexElements());
             NetexSchemaValidator netexSchemaValidator = new NetexSchemaValidator(configuration.maximumErrors());
-            NetexValidatorsRunner netexValidatorsRunner = new NetexValidatorsRunner(netexXMLParser, netexSchemaValidator, List.of());
-
+            NetexValidatorsRunner netexValidatorsRunner = NetexValidatorsRunner
+                    .of()
+                    .withNetexXMLParser(netexXMLParser)
+                    .withNetexSchemaValidator(netexSchemaValidator)
+                    .withXPathValidators(List.of())
+                    .build();
             List<ImmutableReport> reports = zipFile.stream()
                     .filter(e -> !e.isDirectory())
                     .map(zipEntry -> {

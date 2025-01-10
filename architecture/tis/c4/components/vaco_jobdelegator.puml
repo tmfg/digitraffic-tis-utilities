@@ -6,17 +6,14 @@
 Container_Boundary(cb_jobdelegator, "Job Delegation") {
     Component(job_delegator, "JobDelegator", "Java", "Reads in processing job messages and redelegates them accordingly to matching processing queues")
 }
-
-ComponentQueue_Ext(cq_vaco_jobs, "vaco-jobs", "AWS SQS", "VACO job delegation queue")
-ComponentQueue_Ext(cq_vaco_validation, "vaco-jobs-validation", "AWS SQS", "VACO validation jobs queue")
-ComponentQueue_Ext(cq_vaco_conversion, "vaco-jobs-conversion", "AWS SQS", "VACO conversion jobs queue")
-
+Container_Boundary(cb_aws_sqs,"SQS") {
+    ComponentQueue_Ext(cq_vaco_jobs, "vaco-jobs", "AWS SQS", "VACO job delegation queue")
+    ComponentQueue_Ext(cq_rules_processing_per_rule, "rules-processing-{rulename}", "AWS SQS", "Per-rule processing configuration and execution parameters")
+}
 Rel_D(cq_vaco_jobs, job_delegator, "receives jobs", "JSON")
-Rel_U(cq_vaco_validation, cq_vaco_jobs, "resubmit jobs", "JSON")
-Rel_U(cq_vaco_conversion, cq_vaco_jobs, "resubmit jobs", "JSON")
+'Rel_U(cq_rules_processing_per_rule, cq_vaco_jobs, "resubmit jobs", "JSON")
 
-Rel(job_delegator, cq_vaco_conversion, "conversion jobs", "JSON")
-Rel(job_delegator, cq_vaco_validation, "validation jobs", "JSON")
+Rel(job_delegator, cq_rules_processing_per_rule, "job processing control data", "JSON")
 
 !endsub
 

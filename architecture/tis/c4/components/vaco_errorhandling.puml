@@ -5,11 +5,15 @@
 !startsub core
 Container_Boundary(cb_errorhandling, "Error Handling") {
     Component(c_errorlogger,"Error logging and reporting","Java", "Receives error and status messages, saves them into database and provides status information to the queue handler.")
-    ComponentDb(log,"Log","Postgres")
 }
-ComponentQueue_Ext(cq_vaco_errors, "vaco-errors", "AWS SQS", "VACO errors ingest")
+Container_Boundary(cb_aws_sqs,"SQS") {
+    ComponentQueue_Ext(cq_vaco_errors, "vaco-errors", "AWS SQS", "VACO errors ingest")
+}
+Container_Boundary(cb_aws_rds,"Aurora") {
+    ComponentDb_Ext(cdb_findings,"Findings Store","PostgreSQL","Stores findings produced by rule execution.")
+}
 Rel(cq_vaco_errors, c_errorlogger, "Triggers error reporting")
-BiRel(c_errorlogger,log,"Uses and updates","JDBC")
+BiRel(c_errorlogger,cdb_findings,"Records errors","JDBC")
 !endsub
 
 SHOW_LEGEND()

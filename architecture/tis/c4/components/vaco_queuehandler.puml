@@ -11,7 +11,9 @@ Container_Boundary(cb_queuehandler,"Queue Handler") {
     Component(c_api_backend,"Queue handler","Java","Receives data packets from external systems and moves them to validation one by one.")
     'ComponentDb(db_queue_entries, "VACO DB", "PostgreSQL", "VACO core data storage")
 }
-ComponentQueue_Ext(cq_vaco_jobs, "vaco-jobs", "AWS SQS", "VACO job delegation queue")
+Container_Boundary(cb_aws_sqs,"SQS") {
+    ComponentQueue_Ext(cq_vaco_jobs, "vaco-jobs", "AWS SQS", "VACO job delegation queue")
+}
 
 BiRel(c_viewer, c_api_backend, "Uses", "UI specific API")
 Rel(se_application, c_api_backend, "Uses", "REST API")

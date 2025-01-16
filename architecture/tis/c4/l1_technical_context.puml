@@ -1,7 +1,7 @@
 @startuml Technical context
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-System_Boundary(ftcloud,"FTcloud") {
+System_Boundary(ftcloud,"FT Cloud") {
     System(vaco,"VACO")
     System(ura,"RAE")
     System(peti,"PETI")
@@ -28,8 +28,8 @@ Rel(peti,auth_trivoreid,"User Authentication and Authorization", "on demand")
 Rel(ura,vaco,"User Authorization", "on demand")
 Rel(vaco,auth_msgraph,"User Authorization", "on demand")
 
-Rel(auth_trivoreid,auth_entraid,"Data source", "metadadata")
-Rel(auth_trivoreid,auth_msgraph,"Data source", "metadadata")
+BiRel(auth_trivoreid,auth_entraid,"Data source", "metadadata")
+BiRel(auth_trivoreid,auth_msgraph,"Data source", "metadadata")
 
 Rel(finap,vaco,"Validate \nand \nconvert", "batch")
 

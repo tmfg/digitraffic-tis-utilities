@@ -1,0 +1,41 @@
+@startuml Container for editor
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddRelTag("deprecated",$textColor="#aaaaaa",$lineColor="#aaaaaa",$lineStyle=DashedLine())
+
+Person(ServiceOperator,"Service operator", "Operator who does not have their own internal planning system")
+
+System_Boundary(sb_tis,"TIS") {
+    Boundary(sb_vaco,"VACO") {
+        Container(c_backend,"Backend","Java 21, Maven 3", "Controls the asynchronous processing of entries and maintains related result data.")
+        Container(c_ui,"Frontend","Node 18","User facing interface for providing easy access to core functionality and administration features.")
+    }
+
+    Boundary(sb_rules,"Rules") {
+        Container(c_wrapper,"Rule Wrapper","python3", "Runs any rule with a safeguarding wrapper.")
+    }
+}
+
+System_Boundary(aws,"AWS") {
+    Container_Ext(c_aws_s3, "S3", "Blob Storage", "Binary storage for results and other persistent data.")
+    Container_Ext(c_aws_sqs, "SQS", "Message Broker", "Asynchronous distribution and control of in-flight data processing.")
+    ContainerDb_Ext(c_aws_rds,"Aurora", "PostgreSQL", "Metadata and non-binary results persistence.")
+}
+
+System_Boundary(azure,"Azure") {
+    Container_Ext(auth_entraid,"Entra ID", "IAM", "User authentication and authentication.")
+}
+
+Rel(ServiceOperator,c_ui,"Uses","https")
+
+Rel_L(c_ui,auth_entraid,"User authentication and authorization","Oauth 2.0 or similar")
+Rel(c_ui,c_backend,"API calls","structured data")
+BiRel(c_backend,c_aws_rds,"SQL","jdbc")
+BiRel(c_backend,c_aws_s3,"API calls","REST/binary","Results storage")
+BiRel(c_backend,c_aws_sqs,"API calls","REST","Distributed processing\ncontrol messages")
+
+BiRel(c_wrapper, c_aws_s3, "API calls", "intermediate and result file storage")
+Rel(c_wrapper, c_aws_sqs, "API calls", "trigger result processing")
+
+SHOW_LEGEND()
+@enduml

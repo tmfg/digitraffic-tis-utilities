@@ -11,13 +11,13 @@ System_Boundary(sb_aws, "Amazon Web Services") {
     }
 }
 System_Boundary(sb_azure, "Microsoft Azure") {
-    System_Ext(azure_ad, "Azure AD", "fds")
+    System_Ext(azure_ad, "Entra ID", "fds")
 }
 Lay_D(sb_aws, sb_azure)
 
 Person(ft_admin, "Fintraffic Administrator", "Person in charge of managing user authorization and access configuration")
 Rel(ft_admin, management_interface, "manages accesses and permissions", "Web GUI")
-Rel(management_interface, azure_ad, "manages directory metadata", " ")
+Rel(management_interface, azure_ad, "manages directory metadata")
 
 System_Ext(ext_system, "integrating services", "Services which integrate to Fintraffic ID")
 Lay_U(ext_system, sb_aws)

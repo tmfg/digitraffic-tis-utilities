@@ -5,15 +5,24 @@
 
 !startsub core
 Container_Boundary(cb_rule_results, "Rule Results Handling") {
-    Component(c_resulthandler,"Result handling", "Java", "Processes results of externally executed rules, reporting the results and errors.")
+    Component(c_resulthandler,"Result handling", "Java", "Processes results of externally executed rules, recording the available packages, findings and summary data.")
 }
-ComponentQueue_Ext(cq_rules_results, "rules-results", "AWS SQS", "Rule results ingest")
-'ComponentDb(db_queue_entries, "VACO DB", "PostgreSQL", "VACO core data storage")
-Component(c_errorlogger,"Error logging and reporting","Java","Receives error and status messages, saves them into database and provides status information to the queue handler.")
-
+Container_Boundary(cb_aws_sqs,"SQS") {
+    ComponentQueue_Ext(cq_rules_results, "rules-results", "AWS SQS", "Rule results ingest")
+    ComponentQueue_Ext(cq_vaco_jobs, "vaco-jobs", "AWS SQS", "VACO job delegation queue")
+}
+Container_Boundary(cb_aws_rds,"Aurora") {
+    ComponentDb_Ext(cdb_findings,"Findings Store","PostgreSQL","Stores findings produced by rule execution.")
+    ComponentDb_Ext(cdb_summaries,"Summaries Store","PostgreSQL","Stores summaries produced by rule execution.")
+}
+Container_Boundary(db_aws_s3,"S3") {
+    Component_Ext(c_packages,"Packages Store","AWS S3","Stores packages produced by rule execution.")
+}
 Rel(cq_rules_results, c_resulthandler, "Triggers result handling")
-'Rel(c_resulthandler, db_queue_entries, "Stores rule execution results")
-Rel(c_resulthandler, c_errorlogger, "Submits errors")
+Rel(c_resulthandler, cdb_findings, "Records findings")
+Rel(c_resulthandler, cdb_summaries, "Records summaries")
+Rel(c_resulthandler, c_packages, "Records packages")
+Rel(c_resulthandler, cq_vaco_jobs, "Resubmits job for redelegation")
 !endsub
 
 SHOW_LEGEND()

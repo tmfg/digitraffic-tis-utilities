@@ -1,39 +1,41 @@
 @startuml Technical context
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-LAYOUT_TOP_DOWN()
-
-System_Boundary(ftcloud,"FTcloud") {
+System_Boundary(ftcloud,"FT Cloud") {
     System(vaco,"VACO")
-    System(nplan,"Nplan")
+    System(ura,"RAE")
+    System(peti,"PETI")
     System(aggdb,"Aggregate \ndatabase")
-    System(commonr,"Common \nregister")
     System_Ext(finap,"Finap")
 }
 
 System_Boundary(azure,"Azure") {
-    System_Ext(azuread,"Azure AD")
+    System_Ext(auth_entraid,"Entra ID")
+    System_Ext(auth_msgraph,"MS Graph")
+}
+System_Boundary(trivore,"Trivore") {
+    System_Ext(auth_trivoreid,"Trivore ID")
 }
 
-System_Boundary(dt1,"Digitraffic") {
-    System_Ext(digitraffic,"Digitraffic")
-}
-
-System_Boundary(pta_sys,"PTA/TSP/\nMobility operator \nsystem") {
+System_Boundary(pta_sys,"PTA/TSP/Mobility operator") {
     System_Ext(psystem,"Planning \nsystem")
 }
 
-Rel(vaco,azuread,"Authentication")
-Rel(nplan,azuread,"Authentication")
+Rel(vaco,auth_entraid,"User Authentication", "on demand")
+Rel(ura,auth_entraid,"User Authentication", "on demand")
+Rel(peti,auth_trivoreid,"User Authentication and Authorization", "on demand")
 
-Rel(finap,vaco,"Validate \nand \nconvert")
+Rel(ura,vaco,"User Authorization", "on demand")
+Rel(vaco,auth_msgraph,"User Authorization", "on demand")
 
-Rel(vaco,digitraffic,"Publish")
-Rel(aggdb,digitraffic,"Publish")
+BiRel(auth_trivoreid,auth_entraid,"Data source", "metadadata")
+BiRel(auth_trivoreid,auth_msgraph,"Data source", "metadadata")
 
-Rel(psystem,vaco,"Publish")
+Rel(finap,vaco,"Validate \nand \nconvert", "batch")
 
-Rel(commonr,psystem,"Utilize information")
+Rel(vaco,aggdb,"Publish results", "WebSocket push")
+
+Rel(psystem,finap,"Publish open\ncatalog data")
 
 SHOW_LEGEND()
 @enduml

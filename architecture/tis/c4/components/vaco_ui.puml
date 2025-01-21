@@ -8,7 +8,6 @@ Person_Ext(pe_user,"External system users")
 Container_Boundary(cb_viewer, "Validator UI") {
     Component(c_viewer,"Queue handler viewer frontend","TypeScript","Data submission forms and reports for testing in-development feeds.")
 }
-
 Rel(pe_user, c_viewer, "Uses", "Web UI")
 !endsub
 

@@ -1,0 +1,52 @@
+@startuml Container for editor
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+AddRelTag("deprecated",$textColor="#aaaaaa",$lineColor="#aaaaaa",$lineStyle=DashedLine())
+
+Person(ServiceOperator,"Service operator", "Operator who does not have their own internal planning system")
+
+System_Boundary(editors,"Editors") {
+    Boundary(s1,"RAE (Entur Nplan)") {
+        ContainerDb(nplandb,"Database","PostgreSQL")
+        Container(uttu,"Backend (Uttu)","Java 21, Maven 3")
+        Container(enki,"Frontend (Enki)","Node 18","")
+    }
+
+    Boundary(s2,"URA (Entur NSR)") {
+        ContainerDb(nsrdb,"Database","PostgreSQL")
+        Container(abzu,"Frontend (Abzu)","Node 18")
+        Container(tiamat,"Backend (Tiamat)","Java 21, Maven 3")
+    }
+}
+
+System_Boundary(aws,"AWS") {
+    Container_Ext(s3, "AWS S3")
+}
+
+System_Boundary(trivore,"Trivore") {
+    Container_Ext(auth_trivoreid,"User authentication","Trivore ID")
+}
+
+System_Boundary(azure,"Azure") {
+    Container_Ext(auth_entraid,"User authentication","Entra ID")
+}
+'Container_Ext(stopdatabase,"Fintraffic stop place register")
+
+Rel(ServiceOperator,enki,"Uses","https")
+Rel(ServiceOperator,abzu,"Uses","https")
+
+Rel(enki,auth_entraid,"User authentication and authentication","Oauth 2.0 or similar")
+Rel(enki,uttu,"API calls","structured data")
+Rel(uttu,nplandb,"SQL","jdbc")
+Rel(uttu,s3,"API calls","binary","Store timetable exports")
+'Rel(uttu,stopdatabase,"Use","","Use Fintraffic stop place register instead of Tiamat (New interface to be created)")
+
+Rel(abzu,tiamat,"API calls", "structured data")
+Rel(tiamat,nsrdb,"SQL","jdbc")
+Rel(uttu,auth_trivoreid,"Gets token")
+'Rel(enki,finap,"API calls","JSON","Publish route information API endpoint")
+'Rel(public,enki,"API calls","JSON","Gets route information")
+'Rel(finap,public,"http","http","Publishes endpoint API address")
+
+SHOW_LEGEND()
+@enduml

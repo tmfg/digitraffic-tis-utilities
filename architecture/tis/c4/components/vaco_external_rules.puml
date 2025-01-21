@@ -3,20 +3,24 @@
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
 
 !startsub core
-Container_Boundary(cb_rules, "External Rules") {
+Container_Boundary(cb_aws_ecs_rules, "ECS") {
     Component(c_wrapper,"Executable Rule Wrapper","python3", "Runs any rule with a safeguarding wrapper")
     Component_Ext(ce_rule, "Rule implementation", "multiple", "Actual rule isolated from TIS infrastructure.")
 }
-ComponentQueue_Ext(cq_rules_processing_per_rule, "rules-processing-{rulename}", "AWS SQS", "Per-rule processing configuration and execution parameters")
-ComponentQueue_Ext(cq_vaco_errors, "vaco-errors", "AWS SQS", "VACO errors ingest")
-ComponentQueue_Ext(cq_rules_results, "rules-results", "AWS SQS", "Rule results ingest")
-ComponentDb_Ext(cdb_processing,"digitraffic-tis-processing-{env}", "AWS S3", "Intermediary storage for inputs and outputs")
+Container_Boundary(cb_aws_sqs,"SQS") {
+    ComponentQueue_Ext(cq_rules_processing_per_rule, "rules-processing-{rulename}", "AWS SQS", "Per-rule processing configuration and execution parameters")
+    ComponentQueue_Ext(cq_vaco_errors, "vaco-errors", "AWS SQS", "VACO errors ingest")
+    ComponentQueue_Ext(cq_rules_results, "rules-results", "AWS SQS", "Rule results ingest")
+}
+Container_Boundary(db_aws_s3,"S3") {
+    Component_Ext(c_processing,"digitraffic-tis-processing-{env}", "AWS S3", "Intermediary storage for inputs and outputs")
+}
 
 Rel(cq_rules_processing_per_rule, c_wrapper, "Triggers rule execution")
-BiRel(c_wrapper, cdb_processing, "Uses as persistent file storage")
+BiRel(c_wrapper, c_processing, "Uses as persistent file storage")
 BiRel(c_wrapper, ce_rule, "executes as child process, capturing inputs and outputs")
-Rel(c_wrapper, cq_rules_results, "Sends notice of rule's results")
-Rel(c_wrapper, cq_vaco_errors, "Sends notice of fatal non-rule-produced errors")
+Rel(c_wrapper, cq_rules_results, "Records rule's results")
+Rel(c_wrapper, cq_vaco_errors, "Records fatal errors")
 !endsub
 
 SHOW_LEGEND()

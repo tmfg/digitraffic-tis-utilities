@@ -2,23 +2,19 @@ version: 2
 updates:
   # Keep Maven dependencies up to date
   - package-ecosystem: "maven"
-    directory: "/ecs-tasks/netex2gtfs-entur"
+    directories:
+      - "/ecs-tasks/netex2gtfs-entur"
+      - "/ecs-tasks/netex-entur"
+      - "/ecs-tasks/gbfs-entur"
     schedule:
       interval: "monthly"
     reviewers:
       - "tmfg/digitraffic-tis-solita"
-  - package-ecosystem: "maven"
-    directory: "/ecs-tasks/netex-entur"
-    schedule:
-      interval: "monthly"
-    reviewers:
-      - "tmfg/digitraffic-tis-solita"
-  - package-ecosystem: "maven"
-    directory: "/ecs-tasks/gbfs-entur"
-    schedule:
-      interval: "monthly"
-    reviewers:
-      - "tmfg/digitraffic-tis-solita"
+    groups:
+      dev-deps:
+        dependency-type: "development"
+      prod-deps:
+        dependency-type: "production"
   # keep used GitHub Actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -26,3 +22,7 @@ updates:
       interval: "monthly"
     reviewers:
       - "tmfg/digitraffic-tis-solita"
+    groups:
+      actions-deps:
+        patterns:
+          - "*"

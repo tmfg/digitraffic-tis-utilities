@@ -26,6 +26,7 @@ def run(job, input_dir, output_dir):
                 _out=os.path.join(output_dir, "stdout.log"),
                 _err=os.path.join(output_dir, "stderr.log"))
         return {
+            'gtfs.zip': ['result'],
             'stdout.log': ['debug'],
             'stderr.log': ['debug'],
             'reports.json': ['report']

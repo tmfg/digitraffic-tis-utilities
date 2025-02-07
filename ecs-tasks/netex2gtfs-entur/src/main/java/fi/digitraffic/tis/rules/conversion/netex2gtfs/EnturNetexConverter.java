@@ -109,7 +109,7 @@ public class EnturNetexConverter {
         }
 
         try {
-            Files.copy(exportedGtfs, Files.createFile(outputsDirectory.resolve("gtfs.zip")));
+            Files.copy(exportedGtfs, outputsDirectory.resolve("gtfs.zip"));
         } catch (IOException e) {
             throw new ConversionException("Cannot ouput exported GTFS to file", e);
         }

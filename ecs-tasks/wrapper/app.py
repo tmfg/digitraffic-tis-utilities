@@ -100,6 +100,7 @@ def process_job(rule_name, aws, workdir, job):
                                s3_output_uri.path.removeprefix('/') + "/" + filename)):
             logger.warning(f"Failed to upload file {full_path} to {s3_output_uri}")
             continue
+        logger.info(f"{filename} -> {full_path}")
         # the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
         uploaded_files[urijoin(uriunsplit(s3_output_uri), f"output/{filename}")] = packages
 

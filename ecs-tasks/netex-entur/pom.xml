@@ -46,7 +46,7 @@
         <!-- library properties -->
         <hamcrest.version>3.0</hamcrest.version>
         <junit5.version>5.9.2</junit5.version>
-        <mockito.version>5.15.2</mockito.version>
+        <mockito.version>5.16.1</mockito.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <!-- Maven plugin properties -->

@@ -42,7 +42,7 @@
         <!-- BOM properties -->
         <immutables.version>2.10.1</immutables.version>
         <jackson.version>2.19.0</jackson.version>
-        <junit.version>5.12.2</junit.version>
+        <junit.version>5.13.0</junit.version>
         <!-- library properties -->
         <hamcrest.version>3.0</hamcrest.version>
         <junit5.version>5.9.2</junit5.version>
@@ -52,7 +52,7 @@
         <!-- Maven plugin properties -->
         <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
-        <netex-validator.version>10.0.2</netex-validator.version>
+        <netex-validator.version>10.1.0</netex-validator.version>
     </properties>
 
     <dependencyManagement>

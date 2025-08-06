@@ -40,7 +40,7 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- BOM properties -->
-        <immutables.version>2.11.1</immutables.version>
+        <immutables.version>2.11.2</immutables.version>
         <jackson.version>2.19.2</jackson.version>
         <junit.version>5.13.4</junit.version>
         <!-- library properties -->

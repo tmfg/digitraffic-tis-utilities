@@ -8,6 +8,7 @@ Collection of all the small bits and pieces not worth their own repositories.
 
  - [architecture](./architecture) Source files for semi-generated architectural content such as PlantUML diagrams
  - [ECS tasks](./ecs-tasks) ECS Tasks, mainly VACO external rules.
+ - [GML to NeTEx](./gml-to-netex) GML to NeTEx Conversion
 
 ---
 

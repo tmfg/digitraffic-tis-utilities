@@ -9,7 +9,8 @@ import fi.digitraffic.tis.rules.CorruptEntryException;
 import fi.digitraffic.tis.rules.RuleException;
 import org.entur.netex.validation.validator.NetexValidatorsRunner;
 import org.entur.netex.validation.validator.ValidationReport;
-import org.entur.netex.validation.validator.schema.NetexSchemaValidator;
+import org.entur.netex.validation.validator.id.DefaultNetexIdRepository;
+import org.entur.netex.validation.validator.id.NetexIdUniquenessValidator;
 import org.entur.netex.validation.xml.NetexXMLParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,27 +95,27 @@ public class EnturNetexValidator {
 
         try (ZipFile zipFile = toZipFile(netexSource)) {
             NetexXMLParser netexXMLParser = new NetexXMLParser(configuration.ignorableNetexElements());
-            NetexSchemaValidator netexSchemaValidator = new NetexSchemaValidator(configuration.maximumErrors());
+            SimpleNetexSchemaValidator netexSchemaValidator = new SimpleNetexSchemaValidator(configuration.maximumErrors());
             NetexValidatorsRunner netexValidatorsRunner = NetexValidatorsRunner
                     .of()
                     .withNetexXMLParser(netexXMLParser)
                     .withNetexSchemaValidator(netexSchemaValidator)
-                    .withXPathValidators(List.of())
+                    .withXPathValidators(List.of(new NetexIdUniquenessValidator(new DefaultNetexIdRepository())))
                     .build();
             List<ImmutableReport> reports = zipFile.stream()
                     .filter(e -> !e.isDirectory())
                     .map(zipEntry -> {
                         logger.debug("Extracting ZIP entry {} from archive...", zipEntry);
-                        ImmutableReport.Builder report = ImmutableReport.builder()
+                        ImmutableReport.Builder reportBuilder = ImmutableReport.builder()
                                 .entry(zipEntry.getName());
                         try {
                             byte[] bytes = getEntryContents(zipFile, zipEntry);
                         ValidationReport vr = validateNetexEntry(configuration, netexValidatorsRunner, zipEntry, bytes);
-                            report = report.validationReport(vr);
+                            reportBuilder = reportBuilder.validationReport(vr);
                         } catch (CorruptEntryException e) {
-                            report = report.addErrors(serializeThrowable(e));
+                            reportBuilder = reportBuilder.addErrors(serializeThrowable(e));
                         }
-                        return report.build();
+                        return reportBuilder.build();
                     }).toList();
             produceReports(outputsDirectory, reports);
         } catch (IOException e) {
@@ -136,13 +137,6 @@ public class EnturNetexValidator {
             logger.debug("Processing {} as ZIP file", netexSource);
             zipFile = new ZipFile(netexSource.toFile());
         } catch (IOException e1) {
-            //errorHandlerService.reportError(
-            //        ImmutableError.of(
-            //                entry.publicId(),
-            //                task.id(),
-            //                rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
-            //                getIdentifyingName(),
-            //                message));
             throw new RuleException("Failed to unzip provided NeTEx package " + netexSource, e1);
         }
         return zipFile;
@@ -153,13 +147,6 @@ public class EnturNetexValidator {
         try {
             bytes = zipFile.getInputStream(zipEntry).readAllBytes();
         } catch (IOException e) {
-            //errorHandlerService.reportError(
-            //        ImmutableError.of(
-            //                entry.publicId(),
-            //                task.id(),
-            //                rulesetRepository.findByName(RuleName.NETEX_ENTUR_1_0_1).orElseThrow().id(),
-            //                getIdentifyingName(),
-            //                message));
             throw new CorruptEntryException("Failed to access file " + zipEntry.getName() + " within provided NeTEx package " + zipFile.getName(), e);
         }
         return bytes;

@@ -7,9 +7,19 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import fi.digitraffic.tis.rules.CorruptEntryException;
 import fi.digitraffic.tis.rules.RuleException;
+import net.sf.saxon.s9api.XPathCompiler;
+import net.sf.saxon.s9api.XdmNode;
 import org.entur.netex.validation.validator.NetexValidatorsRunner;
+import org.entur.netex.validation.validator.Severity;
+import org.entur.netex.validation.validator.SimpleValidationEntryFactory;
+import org.entur.netex.validation.validator.ValidationIssue;
 import org.entur.netex.validation.validator.ValidationReport;
+import org.entur.netex.validation.validator.ValidationReportEntry;
+import org.entur.netex.validation.validator.ValidationReportEntryFactory;
+import org.entur.netex.validation.validator.ValidationRule;
 import org.entur.netex.validation.validator.id.DefaultNetexIdRepository;
+import org.entur.netex.validation.validator.id.IdVersion;
+import org.entur.netex.validation.validator.id.NetexIdExtractorHelper;
 import org.entur.netex.validation.validator.id.NetexIdUniquenessValidator;
 import org.entur.netex.validation.xml.NetexXMLParser;
 import org.slf4j.Logger;
@@ -20,7 +30,11 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -39,9 +53,18 @@ public class EnturNetexValidator {
         validator.run(arguments);
     }
 
+    static final ValidationRule FINTRAFFIC_RULE_DUPLICATE_ID = new ValidationRule(
+            "FINTRAFFIC_DUPLICATE_NETEX_ID",
+            "NeTEx ID duplicated",
+            "Duplicate element identifiers",
+            Severity.ERROR
+    );
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final ObjectMapper objectMapper;
+
+    private final ValidationReportEntryFactory validationReportEntryFactory = new SimpleValidationEntryFactory();
 
     public EnturNetexValidator() {
         objectMapper = initObjectMapper();
@@ -100,7 +123,6 @@ public class EnturNetexValidator {
                     .of()
                     .withNetexXMLParser(netexXMLParser)
                     .withNetexSchemaValidator(netexSchemaValidator)
-                    .withXPathValidators(List.of(new NetexIdUniquenessValidator(new DefaultNetexIdRepository())))
                     .build();
             List<ImmutableReport> reports = zipFile.stream()
                     .filter(e -> !e.isDirectory())
@@ -110,7 +132,7 @@ public class EnturNetexValidator {
                                 .entry(zipEntry.getName());
                         try {
                             byte[] bytes = getEntryContents(zipFile, zipEntry);
-                        ValidationReport vr = validateNetexEntry(configuration, netexValidatorsRunner, zipEntry, bytes);
+                        ValidationReport vr = validateNetexEntry(netexXMLParser, configuration, netexValidatorsRunner, zipEntry, bytes);
                             reportBuilder = reportBuilder.validationReport(vr);
                         } catch (CorruptEntryException e) {
                             reportBuilder = reportBuilder.addErrors(serializeThrowable(e));
@@ -152,20 +174,53 @@ public class EnturNetexValidator {
         return bytes;
     }
 
-    private ValidationReport validateNetexEntry(Configuration configuration,
+    private ValidationReport validateNetexEntry(NetexXMLParser netexXMLParser,
+                                                Configuration configuration,
                                                 NetexValidatorsRunner netexValidatorsRunner,
                                                 ZipEntry zipEntry,
                                                 byte[] bytes) {
-        return netexValidatorsRunner.validate(
+        ValidationReport report = netexValidatorsRunner.validate(
                 configuration.codespace(),
                 configuration.reportId(),
                 zipEntry.getName(),
                 bytes);
+
+        report.addAllValidationReportEntries(validateDuplicateIds(
+                netexXMLParser,
+                bytes,
+                zipEntry.getName()
+        ));
+
+        return report;
     }
 
     private static String serializeThrowable(Throwable e) {
         StringWriter sw = new StringWriter();
         e.printStackTrace(new PrintWriter(sw));
         return sw.toString();
+    }
+
+    private List<ValidationReportEntry> validateDuplicateIds(NetexXMLParser netexXMLParser, byte[] fileContent, String filename) {
+        XdmNode document = netexXMLParser.parseByteArrayToXdmNode(fileContent);
+        XPathCompiler xPathCompiler = netexXMLParser.getXPathCompiler();
+        List<IdVersion> localIds = NetexIdExtractorHelper.collectEntityIdentifiers(
+                document,
+                xPathCompiler,
+                filename,
+                Set.of("Codespace")
+        );
+
+        return duplicateIds(localIds)
+                .map(idVersion -> new ValidationIssue(
+                        FINTRAFFIC_RULE_DUPLICATE_ID,
+                        idVersion.dataLocation()
+                ))
+                .map(validationReportEntryFactory::createValidationReportEntry)
+                .toList();
+    }
+
+    private Stream<IdVersion> duplicateIds(List<IdVersion> idVersions) {
+        Set<IdVersion> seen = new HashSet<>();
+        return idVersions.stream().filter(idVersion -> !seen.add(idVersion));
     }
 }

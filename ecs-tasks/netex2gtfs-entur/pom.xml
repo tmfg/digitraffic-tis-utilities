@@ -41,9 +41,9 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- BOM properties -->
-        <immutables.version>2.11.3</immutables.version>
+        <immutables.version>2.11.4</immutables.version>
         <jackson.version>2.20.0</jackson.version>
-        <junit.version>5.13.4</junit.version>
+        <junit.version>6.0.0</junit.version>
         <!-- library properties -->
         <hamcrest.version>3.0</hamcrest.version>
         <junit5.version>5.9.2</junit5.version>
@@ -51,9 +51,9 @@
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <!-- Maven plugin properties -->
-        <maven-compiler-plugin.version>3.14.0</maven-compiler-plugin.version>
+        <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
-        <netex2gtfs-converter.version>2.1.95</netex2gtfs-converter.version>
+        <netex2gtfs-converter.version>2.1.99</netex2gtfs-converter.version>
     </properties>
 
     <dependencyManagement>
@@ -87,12 +87,12 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.18</version>
+            <version>1.5.19</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-to-slf4j</artifactId>
-            <version>2.25.1</version>
+            <version>2.25.2</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

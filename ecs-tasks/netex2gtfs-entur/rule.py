@@ -13,10 +13,14 @@ def run(job, input_dir, output_dir):
         configuration = dict()
 
     with open(os.path.join(input_dir, 'config.json'), 'w') as config_file:
+        stops_only = configuration.get('stopsOnly') is True
+        timetable_dataset = None if stops_only else os.path.join(input_dir, 'netex.zip')
+        stops_and_quays_dataset = os.path.join(input_dir, 'netex.zip') if stops_only else os.path.join(input_dir, 'stopsAndQuays.zip')
         json.dump({
             'codespace': configuration['codespace'],
-            'timetableDataset': os.path.join(input_dir, 'netex.zip'),
-            'stopsAndQuaysDataset': os.path.join(input_dir, 'stopsAndQuays.zip')
+            'stopsOnly': stops_only,
+            'timetableDataset': timetable_dataset,
+            'stopsAndQuaysDataset': stops_and_quays_dataset
         }, config_file)
 
     try:

@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -34,12 +35,26 @@ class EnturNetexConverterTests {
     @Test
     @Tag("longRunning")
     @Tag("integration")
-    void canProcessNetexInput() throws URISyntaxException, IOException {
+    void canProcessNetexTimetableInput() throws URISyntaxException, IOException {
         // these files are produced by Entur AS
         Path timetable = loadResource("rb_vyg-aggregated-netex.zip");
-        Path stopsAndQuaus = loadResource("RailStations_latest.zip");
+        Path stopsAndQuays = loadResource("RailStations_latest.zip");
 
-        String[] args = generateConfiguration(input, timetable, stopsAndQuaus, output);
+        String[] args = generateConfiguration(input, false, timetable, stopsAndQuays, output);
+
+        EnturNetexConverter.main(args);
+
+        assertThat(Files.exists(output.resolve("gtfs.zip")), equalTo(true));
+    }
+
+    @Test
+    @Tag("longRunning")
+    @Tag("integration")
+    void canProcessNetexStopsInput() throws URISyntaxException, IOException {
+        // these files are produced by Entur AS
+        Path stopsAndQuays = loadResource("RailStations_latest.zip");
+
+        String[] args = generateConfiguration(input, true, null, stopsAndQuays, output);
 
         EnturNetexConverter.main(args);
 
@@ -50,22 +65,25 @@ class EnturNetexConverterTests {
     @Tag("integration")
     void failsGracefullyOnMissingStopData() throws URISyntaxException, IOException {
         Path timetable = loadResource("rb_vyg-aggregated-netex.zip");
-        Path stopsAndQuaus = loadResource("emptyStopsAndQuays.zip");
+        Path stopsAndQuays = loadResource("emptyStopsAndQuays.zip");
 
-        String[] args = generateConfiguration(input, timetable, stopsAndQuaus, output);
+        String[] args = generateConfiguration(input, false, timetable, stopsAndQuays, output);
 
         EnturNetexConverter.main(args);
 
         assertThat(Files.exists(output.resolve("gtfs.zip")), equalTo(false));
     }
 
-    private String[] generateConfiguration(Path input, Path timetable, Path stopsAndQuaus, Path output) throws IOException {
-        Path config = Files.writeString(
+    private String[] generateConfiguration(Path input, boolean stopsOnly, Path timetable, Path stopsAndQuays, Path output) throws IOException {
+        Map<String, Object> config = new HashMap<>();
+        config.put("codespace", "FTR");
+        config.put("stopsOnly", stopsOnly);
+        config.put("timetableDataset", timetable != null ? timetable.toString(): null);
+        config.put("stopsAndQuaysDataset", stopsAndQuays.toString());
+
+        Files.writeString(
                 Files.createFile(input.resolve("config.json")),
-                objectMapper.writeValueAsString(
-                        Map.of("codespace", "FTR",
-                               "timetableDataset", timetable.toString(),
-                               "stopsAndQuaysDataset", stopsAndQuaus.toString())));
+                objectMapper.writeValueAsString(config));
 
         String[] args = {
                 "--input", input.toString(),

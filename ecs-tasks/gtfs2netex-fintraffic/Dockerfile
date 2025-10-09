@@ -1,18 +1,18 @@
-FROM alpine:3.19
+FROM alpine:3.22
 
-COPY --from=python:3.11.9-alpine3.19 / /
-COPY --from=node:20-alpine3.19 / /
-COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.90.0 /usr/src/app/ /
+COPY --from=python:3.13.8-alpine3.22 / /
+COPY --from=node:22-alpine3.22 / /
+COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.95.0 /usr/src/app/ /
 
 ### copy of ENVs from merged images
-# python:3.11.9-alpine3.19
+# python:3.13.8-alpine3.22
 ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-ENV PATH /usr/local/bin:$PATH
-ENV PYTHON_VERSION=3.11.9
-ENV PYTHON_PIP_VERSION=24.0
-# node:20-alpine3.19
-ENV NODE_VERSION=20.12.2
-ENV YARN_VERSION=1.22.19
+ENV PATH=/usr/local/bin:$PATH
+ENV PYTHON_VERSION=3.13.8
+ENV PYTHON_PIP_VERSION=25.2
+# node:22-alpine3.22
+ENV NODE_VERSION=20.20.0
+ENV YARN_VERSION=1.22.22
 # both
 ENV LANG=C.UTF-8
 

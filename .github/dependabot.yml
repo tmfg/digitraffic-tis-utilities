@@ -13,6 +13,12 @@ updates:
         dependency-type: "development"
       prod-deps:
         dependency-type: "production"
+  # Keep Python dependencies up to date
+  - package-ecosystem: "pip"
+    directories:
+      - "/ecs-tasks/"
+    schedule:
+      interval: "monthly"
   # keep used GitHub Actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"

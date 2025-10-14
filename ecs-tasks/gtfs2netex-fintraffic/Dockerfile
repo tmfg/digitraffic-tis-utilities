@@ -2,7 +2,7 @@ FROM alpine:3.22
 
 COPY --from=python:3.13.8-alpine3.22 / /
 COPY --from=node:22-alpine3.22 / /
-COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.95.0 /usr/src/app/ /
+COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.96.0 /usr/src/app/ /
 
 ### copy of ENVs from merged images
 # python:3.13.8-alpine3.22

@@ -60,7 +60,7 @@ public class EnturNetexConverter {
         try {
             convert(conf, arguments.outputPath);
         } catch (RuleException e) {
-            logger.error("Failed to run GTFS to NeTEx conversion for " + arguments, e);
+            logger.error("Failed to run GTFS to NeTEx conversion for {}", arguments, e);
         }
     }
 
@@ -87,25 +87,28 @@ public class EnturNetexConverter {
         }
         DefaultStopAreaRepository defaultStopAreaRepository = new DefaultStopAreaRepository();
         defaultStopAreaRepository.loadStopAreas(stopsAndQuaysDataset);
-        // input stream pointing to a zip archive containing the NeTEX timetable data.
-        InputStream netexTimetableDataset;
-        try {
-            netexTimetableDataset = Files.newInputStream(Path.of(configuration.timetableDataset()));
-        } catch (IOException e) {
-            throw new ConversionException("Could not read timetable dataset file from '" + configuration.timetableDataset() + "'", e);
-        }
-        // NeTEX codespace for the timetable data provider.
+
+        // NeTEX codespace.
         String codespace = configuration.codespace();
 
         GtfsExporter gtfsExport = new DefaultGtfsExporter(codespace, defaultStopAreaRepository);
-
-        // the returned Inputstream points to a GTFS zip archive
-
         InputStream exportedGtfs;
-        try {
-            exportedGtfs = gtfsExport.convertTimetablesToGtfs(netexTimetableDataset);
-        } catch (RuntimeException e) {
-            throw new ConversionException("Failed to convert NeTEx timetable data to GTFS", e);
+
+        if (configuration.stopsOnly()) {
+            try {
+                exportedGtfs = gtfsExport.convertStopsToGtfs();
+            } catch (Exception e) {
+                throw new ConversionException("Failed to convert NeTEx stops to GTFS", e);
+            }
+        } else {
+            // input stream pointing to a zip archive containing the NeTEX timetable data.
+            try (InputStream netexTimetableDataset = Files.newInputStream(Path.of(configuration.timetableDataset()))) {
+                exportedGtfs = gtfsExport.convertTimetablesToGtfs(netexTimetableDataset);
+            } catch (IOException e) {
+                throw new ConversionException("Could not read timetable dataset file from '" + configuration.timetableDataset() + "'", e);
+            } catch (RuntimeException e) {
+                throw new ConversionException("Failed to convert NeTEx timetable data to GTFS", e);
+            }
         }
 
         try {
@@ -114,5 +117,4 @@ public class EnturNetexConverter {
             throw new ConversionException("Cannot ouput exported GTFS to file", e);
         }
     }
-
 }

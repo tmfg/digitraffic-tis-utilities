@@ -52,7 +52,7 @@
         <!-- Maven plugin properties -->
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
-        <netex-validator.version>10.4.11</netex-validator.version>
+        <netex-validator.version>11.0.1</netex-validator.version>
     </properties>
 
     <dependencyManagement>
@@ -86,7 +86,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.19</version>
+            <version>1.5.20</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

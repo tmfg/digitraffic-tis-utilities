@@ -8,6 +8,8 @@ updates:
       - "/ecs-tasks/gbfs-entur"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 2
     groups:
       dev-deps:
         dependency-type: "development"
@@ -19,11 +21,15 @@ updates:
       - "/ecs-tasks/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 2
   # keep used GitHub Actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 2
     groups:
       actions-deps:
         patterns:

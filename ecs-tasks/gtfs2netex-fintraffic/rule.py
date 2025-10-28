@@ -8,6 +8,7 @@ logger = logging.getLogger()
 
 def run(job, input_dir, output_dir):
     try:
+        logger.info(f"Rule run for publicID {str(job["entry"]["publicId"])}")
         sh.npm("run", "convert", "--",
                "--gtfs", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),
                "--netex", os.path.realpath(output_dir),
@@ -26,5 +27,6 @@ def run(job, input_dir, output_dir):
         }
         return {**routes, **stops, **stats, **defaults}
     except sh.ErrorReturnCode as e:
+        logger.warning(f"Failed rule run for publicID {str(job["entry"]["publicId"])}")
         logger.exception("failed to run subprocess")
         return dict()

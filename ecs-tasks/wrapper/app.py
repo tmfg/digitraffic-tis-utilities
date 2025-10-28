@@ -64,6 +64,7 @@ def upload_s3_file(s3_client, file_name, bucket, object_name):
 
 
 def process_job(rule_name, aws, workdir, job):
+    logger.info(f"process_job")
     s3_input_uri = urisplit(job["inputs"])
     s3_output_uri = urisplit(job["outputs"])
     logger.debug('S3 input URI is ' + str(s3_input_uri))
@@ -82,7 +83,7 @@ def process_job(rule_name, aws, workdir, job):
                        local_dir=input_dir)
     # run command
     outputs_meta = rule.run(job, input_dir, output_dir)
-    logger.info(f"Rule produced {outputs_meta}")
+    logger.info(f"Rule produced for publicID {str(job["entry"]["publicId"])} :> {outputs_meta}")
     # map of uploaded result files with list of package scopes
     uploaded_files = {}
     for filename in os.listdir(output_dir):
@@ -98,14 +99,14 @@ def process_job(rule_name, aws, workdir, job):
                                full_path,
                                s3_output_uri.authority,
                                s3_output_uri.path.removeprefix('/') + "/" + filename)):
-            logger.warning(f"Failed to upload file {full_path} to {s3_output_uri}")
+            logger.warning(f"Failed to upload file for publicID: {str(job["entry"]["publicId"])} :> {full_path} to {s3_output_uri}")
             continue
         logger.info(f"{filename} -> {full_path}")
         # the /output/ is dropped here despite seemingly correct way of appending, should investigate+fix
         uploaded_files[urijoin(uriunsplit(s3_output_uri), f"output/{filename}")] = packages
 
     # ^-- list of Notices
-    logger.info(f"uploaded_files :> {uploaded_files}")
+    logger.info(f"uploaded_files for publicID {str(job["entry"]["publicId"])} :> {uploaded_files}")
     result_message = {
         'entryId': job['entry']['publicId'],        # note the use of publicId instead of internal id
         'taskId': job['task']['id'],                # TODO: should have publicId for tasks as well
@@ -154,7 +155,7 @@ def run_task(workdir, rule_name):
     }
 
     job_queue = aws['sqs']['resource'].get_queue_by_name(QueueName=munge(rule_name))  # TODO: the correct name
-
+    logger.info(f"Run task for jobQueue: {str(job_queue)} ")
     contains_messages = True
     while contains_messages:
         messages = job_queue.receive_messages(MaxNumberOfMessages=1)
@@ -162,7 +163,7 @@ def run_task(workdir, rule_name):
         for job_message in messages:
             logger.info(f"Processing message {str(job_message)}")
             job = json.loads(job_message.body)
-            logger.info(f"Processing job {str(job)}")
+            logger.info(f"Processing job for publicID: {str(job["entry"]["publicId"])} :> {str(job)}")
             process_job(rule_name, aws, os.path.join(workdir, job["entry"]["publicId"], str(int(time.time()))), job)
             job_message.delete()
 

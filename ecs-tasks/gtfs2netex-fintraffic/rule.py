@@ -14,6 +14,7 @@ def run(job, input_dir, output_dir):
                "--netex", os.path.realpath(output_dir),
                _out=os.path.join(output_dir, "stdout.log"),
                _err=os.path.join(output_dir, "stderr.log"))
+        logger.info(f"Rule converter completed for publicID {str(job["entry"]["publicId"])}")
         # add all route XMLs as result
         routes = dict.fromkeys(fnmatch.filter(os.listdir(output_dir), '*_line_*.xml'), ['result'])
         stops = dict.fromkeys(fnmatch.filter(os.listdir(output_dir), '*_all_stops.xml'), ['stops'])
@@ -29,4 +30,11 @@ def run(job, input_dir, output_dir):
     except sh.ErrorReturnCode as e:
         logger.warning(f"Failed rule run for publicID {str(job["entry"]["publicId"])}")
         logger.exception("failed to run subprocess")
+        return dict()
+    except sh.TimeoutException as e:
+        logger.warning(f"Timeout while running rule for publicID {str(job["entry"]["publicId"])} :> {str(e)}")
+        logger.exception("npm convert subprocess timed out")
+        return dict()
+    except Exception as e:
+        logger.warning(f"Unexpected error for publicID {str(job["entry"]["publicId"])} : > {str(e)}")
         return dict()

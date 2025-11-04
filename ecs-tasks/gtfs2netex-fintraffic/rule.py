@@ -9,11 +9,13 @@ logger = logging.getLogger()
 def run(job, input_dir, output_dir):
     try:
         logger.info(f"Rule run for publicID {str(job["entry"]["publicId"])}")
+        # Added 8hours timeout
         sh.npm("run", "convert", "--",
                "--gtfs", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),
                "--netex", os.path.realpath(output_dir),
                _out=os.path.join(output_dir, "stdout.log"),
-               _err=os.path.join(output_dir, "stderr.log"))
+               _err=os.path.join(output_dir, "stderr.log"),
+               _timeout=28800)
         logger.info(f"Rule converter completed for publicID {str(job["entry"]["publicId"])}")
         # add all route XMLs as result
         routes = dict.fromkeys(fnmatch.filter(os.listdir(output_dir), '*_line_*.xml'), ['result'])

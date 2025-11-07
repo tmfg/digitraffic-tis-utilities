@@ -23,6 +23,10 @@ updates:
       interval: "monthly"
     cooldown:
       default-days: 2
+    groups:
+      python-deps:
+        patterns:
+          - "*"
   # keep used GitHub Actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"

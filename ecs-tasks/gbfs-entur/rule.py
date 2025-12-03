@@ -8,7 +8,8 @@ logger = logging.getLogger()
 def run(job, input_dir, output_dir):
     try:
         logger.info(f"Rule run for publicID {str(job["entry"]["publicId"])}")
-        sh.java("-jar", "validation-gbfs-entur.jar",
+        sh.java("-Djava.io.tmpdir=/app/tmp",  # JVM temp dir option
+                "-jar", "validation-gbfs-entur.jar",
                 "-i", os.path.realpath(input_dir),
                 "-o", os.path.realpath(output_dir),
                 _out=os.path.join(output_dir, "stdout.log"),

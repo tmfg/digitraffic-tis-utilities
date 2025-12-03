@@ -24,4 +24,8 @@ ADD ./wrapper /
 ADD ./netex2gtfs-entur/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
+RUN mkdir -p /app/tmp
+
+VOLUME ["/app/tmp"]
+
 ENTRYPOINT ["python", "app.py", "--rule-name", "netex2gtfs.entur"]

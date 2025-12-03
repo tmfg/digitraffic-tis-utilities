@@ -24,4 +24,7 @@ ADD ./wrapper /
 ADD ./gbfs-entur/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
+RUN mkdir -p /app/tmp
+
+VOLUME ["/app/tmp"]
 ENTRYPOINT ["python", "app.py", "--rule-name", "gbfs.entur"]

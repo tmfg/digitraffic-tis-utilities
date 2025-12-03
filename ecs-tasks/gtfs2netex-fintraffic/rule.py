@@ -13,6 +13,7 @@ def run(job, input_dir, output_dir):
         sh.npm("run", "convert", "--",
                "--gtfs", os.path.realpath(os.path.join(input_dir, "gtfs.zip")),
                "--netex", os.path.realpath(output_dir),
+               "--tmpDir", "/app/tmp",  # Node temp dir option
                _out=os.path.join(output_dir, "stdout.log"),
                _err=os.path.join(output_dir, "stderr.log"),
                _timeout=28800)

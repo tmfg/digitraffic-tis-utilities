@@ -17,7 +17,6 @@ execute rulename:
     --read-only \
     --network=tis_tis \
     -v $(pwd)/app-tmp:/app/tmp \
-    -e TMPDIR=/app/tmp \
     -e LOCALSTACK_ENDPOINT_URL=http://localstack:4566 \
     ecs-task-{{rulename}}
 

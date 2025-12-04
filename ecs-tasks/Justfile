@@ -14,7 +14,9 @@ build rulename:
 execute rulename:
   docker run --platform linux/amd64 \
     --rm \
+    --read-only \
     --network=tis_tis \
+    -v $(pwd)/app-tmp:/app/tmp \
     -e LOCALSTACK_ENDPOINT_URL=http://localstack:4566 \
     ecs-task-{{rulename}}
 

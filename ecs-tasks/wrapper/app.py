@@ -15,6 +15,7 @@ import rule
 
 fileConfig('logging_config.ini', disable_existing_loggers=False)
 logger = logging.getLogger()
+tempfile.tempdir = '/app/tmp'
 
 
 # original from https://stackoverflow.com/a/62945526/44523

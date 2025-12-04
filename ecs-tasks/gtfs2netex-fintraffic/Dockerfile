@@ -27,4 +27,8 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN apk add bash \
     && apk cache clean
 
+RUN mkdir -p /app/tmp
+
+VOLUME ["/app/tmp"]
+
 ENTRYPOINT ["python", "app.py", "--rule-name", "gtfs2netex.fintraffic"]

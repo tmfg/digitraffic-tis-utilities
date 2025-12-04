@@ -4,7 +4,8 @@ import os
 import fnmatch
 
 logger = logging.getLogger()
-
+env = os.environ.copy()  # copy existing env
+env["TMPDIR"] = "/app/tmp"
 
 def run(job, input_dir, output_dir):
     try:
@@ -15,7 +16,9 @@ def run(job, input_dir, output_dir):
                "--netex", os.path.realpath(output_dir),
                _out=os.path.join(output_dir, "stdout.log"),
                _err=os.path.join(output_dir, "stderr.log"),
-               _timeout=28800)
+               _timeout=28800,
+               _env=env  # Node will use this
+        )
         logger.info(f"Rule converter completed for publicID {str(job["entry"]["publicId"])}")
         # add all route XMLs as result
         routes = dict.fromkeys(fnmatch.filter(os.listdir(output_dir), '*_line_*.xml'), ['result'])

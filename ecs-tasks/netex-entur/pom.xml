@@ -40,7 +40,7 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- BOM properties -->
-        <immutables.version>2.11.6</immutables.version>
+        <immutables.version>2.11.7</immutables.version>
         <jackson.version>2.20.1</jackson.version>
         <junit.version>6.0.1</junit.version>
         <!-- library properties -->
@@ -52,7 +52,7 @@
         <!-- Maven plugin properties -->
         <maven-compiler-plugin.version>3.14.1</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
-        <netex-validator.version>11.0.3</netex-validator.version>
+        <netex-validator.version>11.0.6</netex-validator.version>
     </properties>
 
     <dependencyManagement>
@@ -86,7 +86,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.20</version>
+            <version>1.5.21</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

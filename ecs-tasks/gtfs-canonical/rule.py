@@ -17,6 +17,7 @@ def run(job, input_dir, output_dir):
         sh.java("-Djava.io.tmpdir=/app/tmp",  # JVM temp dir option
                 "-jar", "gtfs-validator-cli.jar",
                 "-i", input_file,
+                "-svu",  # Skips check for new validator version
                 "-o", os.path.realpath(output_dir),
                 _out=os.path.join(output_dir, "stdout.log"),
                 _err=os.path.join(output_dir, "stderr.log"))

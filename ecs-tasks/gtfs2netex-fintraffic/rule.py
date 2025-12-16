@@ -16,7 +16,6 @@ def run(job, input_dir, output_dir):
                "--netex", os.path.realpath(output_dir),
                _out=os.path.join(output_dir, "stdout.log"),
                _err=os.path.join(output_dir, "stderr.log"),
-               _timeout=28800,
                _env=env  # Node will use this
         )
         logger.info(f"Rule converter completed for publicID {str(job["entry"]["publicId"])}")

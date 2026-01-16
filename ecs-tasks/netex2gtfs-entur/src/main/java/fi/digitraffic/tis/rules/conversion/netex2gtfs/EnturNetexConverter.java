@@ -9,7 +9,6 @@ import fi.digitraffic.tis.rules.InvalidConfigurationException;
 import fi.digitraffic.tis.rules.MissingConfigurationException;
 import fi.digitraffic.tis.rules.RuleException;
 import fi.digitraffic.tis.rules.conversion.ConversionException;
-import org.entur.netex.gtfs.export.DefaultGtfsExporter;
 import org.entur.netex.gtfs.export.GtfsExporter;
 import org.entur.netex.gtfs.export.stop.DefaultStopAreaRepository;
 import org.slf4j.Logger;
@@ -91,7 +90,7 @@ public class EnturNetexConverter {
         // NeTEX codespace.
         String codespace = configuration.codespace();
 
-        GtfsExporter gtfsExport = new DefaultGtfsExporter(codespace, defaultStopAreaRepository);
+        GtfsExporter gtfsExport = new VacoGtfsExporter(codespace, defaultStopAreaRepository);
         InputStream exportedGtfs;
 
         if (configuration.stopsOnly()) {

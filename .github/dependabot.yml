@@ -29,6 +29,22 @@ updates:
       python-deps:
         patterns:
           - "*"
+  # Keep Docker dependencies up to date
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7 # Wait 7 days for any update
+    ignore:
+      # Ignore updates to Java versions other than 21
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "maven"
+        update-types: ["version-update:semver-major"]
+      # Ignore updates to Node versions other than 21
+      - dependency-name: "node"
+        update-types: [ "version-update:semver-major" ]
   # keep used GitHub Actions up to date
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -36,7 +52,6 @@ updates:
       interval: "monthly"
     cooldown:
       default-days: 7 # Wait 7 days for any update
-      semver-major-days: 14 # Wait 14 days for major version bumps
     groups:
       actions-deps:
         patterns:

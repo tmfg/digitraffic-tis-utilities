@@ -9,7 +9,8 @@ updates:
     schedule:
       interval: "monthly"
     cooldown:
-      default-days: 2
+      default-days: 7 # Wait 7 days for any update
+      semver-major-days: 14 # Wait 14 days for major version bumps
     groups:
       dev-deps:
         dependency-type: "development"
@@ -22,7 +23,8 @@ updates:
     schedule:
       interval: "monthly"
     cooldown:
-      default-days: 2
+      default-days: 7 # Wait 7 days for any update
+      semver-major-days: 14 # Wait 14 days for major version bumps
     groups:
       python-deps:
         patterns:
@@ -33,7 +35,8 @@ updates:
     schedule:
       interval: "monthly"
     cooldown:
-      default-days: 2
+      default-days: 7 # Wait 7 days for any update
+      semver-major-days: 14 # Wait 14 days for major version bumps
     groups:
       actions-deps:
         patterns:

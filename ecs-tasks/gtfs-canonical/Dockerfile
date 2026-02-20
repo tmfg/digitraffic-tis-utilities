@@ -1,4 +1,4 @@
-FROM python:3.14.2-slim-bookworm
+FROM python:3.14.2-slim-bookworm AS app
 ENV JAVA_HOME=/opt/java/openjdk
 
 COPY --from=eclipse-temurin:21.0.9_10-jre-noble $JAVA_HOME $JAVA_HOME
@@ -20,6 +20,16 @@ ADD ./gtfs-canonical/rule.py /
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 
 RUN mkdir -p /app/tmp
+
+# Generate SBOM
+FROM aquasec/trivy:latest AS sbom-generator
+COPY --from=app / /scanroot
+RUN trivy rootfs --format cyclonedx --output /bom.json /scanroot
+
+# Embed SBOM
+FROM app
+ARG GITHUB_SHA
+COPY --from=sbom-generator /bom.json /sbom/${GITHUB_SHA}.json
 
 VOLUME ["/app/tmp"]
 

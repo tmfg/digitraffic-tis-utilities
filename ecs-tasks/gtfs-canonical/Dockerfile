@@ -22,7 +22,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN mkdir -p /app/tmp
 
 # Generate SBOM
-FROM aquasec/trivy:latest AS sbom-generator
+FROM aquasec/trivy:0.69.1 AS sbom-generator
 COPY --from=app / /scanroot
 RUN trivy rootfs --format cyclonedx --output /bom.json /scanroot
 

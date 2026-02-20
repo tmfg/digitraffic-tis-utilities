@@ -28,12 +28,12 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN mkdir -p /app/tmp
 
 # Trivy rootfs scan
-FROM aquasec/trivy:latest AS sbom-generator
+FROM aquasec/trivy:0.69.1 AS sbom-generator
 COPY --from=app / /scanroot
 RUN trivy rootfs --format cyclonedx --output /trivy-bom.json /scanroot
 
 # Merge Maven SBOM + Trivy SBOM
-FROM --platform=linux/amd64 cyclonedx/cyclonedx-cli:latest AS sbom-merger
+FROM --platform=linux/amd64 cyclonedx/cyclonedx-cli:0.30.0 AS sbom-merger
 ARG GITHUB_SHA
 COPY --from=build /target/sbom/${GITHUB_SHA}.json /maven-bom.json
 COPY --from=sbom-generator /trivy-bom.json /trivy-bom.json

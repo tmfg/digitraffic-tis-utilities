@@ -28,7 +28,7 @@ RUN apk add bash \
 RUN mkdir -p /app/tmp
 
 # Generate SBOM
-FROM aquasec/trivy:latest AS sbom-generator
+FROM aquasec/trivy:0.69.1 AS sbom-generator
 COPY --from=app / /scanroot
 RUN trivy rootfs --format cyclonedx --output /bom.json /scanroot
 

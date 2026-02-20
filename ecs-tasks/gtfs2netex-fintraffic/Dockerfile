@@ -1,4 +1,4 @@
-FROM alpine:3.23
+FROM alpine:3.23 AS app
 
 COPY --from=python:3.14.2-alpine3.23 / /
 COPY --from=node:22.22.0-alpine3.23 / /
@@ -26,6 +26,16 @@ RUN apk add bash \
     && apk cache clean
 
 RUN mkdir -p /app/tmp
+
+# Generate SBOM
+FROM aquasec/trivy:latest AS sbom-generator
+COPY --from=app / /scanroot
+RUN trivy rootfs --format cyclonedx --output /bom.json /scanroot
+
+# Embed SBOM
+FROM app
+ARG GITHUB_SHA
+COPY --from=sbom-generator /bom.json /sbom/${GITHUB_SHA}.json
 
 VOLUME ["/app/tmp"]
 

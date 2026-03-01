@@ -43,7 +43,7 @@
         <!-- BOM properties -->
         <immutables.version>2.12.1</immutables.version>
         <jackson.version>2.21.0</jackson.version>
-        <junit.version>6.0.2</junit.version>
+        <junit.version>6.0.3</junit.version>
         <!-- library properties -->
         <hamcrest.version>3.0</hamcrest.version>
         <junit5.version>5.9.2</junit5.version>
@@ -54,7 +54,7 @@
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
         <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
-        <netex-validator.version>11.0.18</netex-validator.version>
+        <netex-validator.version>11.0.21</netex-validator.version>
     </properties>
 
     <dependencyManagement>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.26</version>
+            <version>1.5.32</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

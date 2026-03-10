@@ -7,7 +7,7 @@ default:
 
 # Build rule container identified by its name.
 build rulename:
-  docker build --platform linux/amd64 -t ecs-task-{{rulename}} -f ./{{rulename}}/Dockerfile .
+  docker build --build-arg GITHUB_SHA="$(git rev-parse HEAD)" --platform linux/amd64 -t ecs-task-{{rulename}} -f ./{{rulename}}/Dockerfile .
 
 # Execute rule container identified by its name.
 [private]

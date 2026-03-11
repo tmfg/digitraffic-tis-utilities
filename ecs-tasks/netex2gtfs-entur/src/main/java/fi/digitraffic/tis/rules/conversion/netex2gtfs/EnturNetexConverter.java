@@ -107,13 +107,28 @@ public class EnturNetexConverter {
                 .map(EntityStructure::getId)
                 .toList();
 
+        List<String> stopPlacesWithoutCoords = stopAreaRepository.getAllQuays().stream()
+                .map(quay -> stopAreaRepository.getStopPlaceByQuayId(quay.getId()))
+                .filter(stopPlace -> stopPlace.getCentroid() == null)
+                .map(EntityStructure::getId)
+                .toList();
+
          if (!quaysWithoutCoords.isEmpty()) {
              for (int i = 0; i < quaysWithoutCoords.size(); i++) {
                  if (i >= 10) {
+                     logger.warn("Found additional {} Quays without coordinates", quaysWithoutCoords.size() - 10);
                      break;
                  }
                  String quayId = quaysWithoutCoords.get(i);
-                 logger.warn("Stop area with id '{}' is missing coordinates", quayId);
+                 logger.warn("Quay with id '{}' is missing coordinates", quayId);
+             }
+             for (int i = 0; i < stopPlacesWithoutCoords.size(); i++) {
+                if (i >= 10) {
+                    logger.warn("Found additional {} StopPlaces without coordinates", quaysWithoutCoords.size() - 10);
+                    break;
+                }
+                String stopPlaceId = stopPlacesWithoutCoords.get(i);
+                logger.warn("StopPlace with id '{}' is missing coordinates", stopPlaceId);
              }
              throw new ConversionException("Some stop areas are missing coordinates, cannot continue with GTFS export");
          }

@@ -11,6 +11,8 @@ import fi.digitraffic.tis.rules.RuleException;
 import fi.digitraffic.tis.rules.conversion.ConversionException;
 import org.entur.netex.gtfs.export.GtfsExporter;
 import org.entur.netex.gtfs.export.stop.DefaultStopAreaRepository;
+import org.entur.netex.gtfs.export.stop.StopAreaRepository;
+import org.rutebanken.netex.model.EntityStructure;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,6 +20,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Wrapper class for running Entur's NeTEx validator based on the unified file based interface of external rules.
@@ -75,17 +79,77 @@ public class EnturNetexConverter {
         }
     }
 
-    private void convert(Configuration configuration,
-                         Path outputsDirectory) throws ConversionException {
-        // input stream pointing to a zip archive containing the NeTEX stops and quays definitions.
-        InputStream stopsAndQuaysDataset;
-        try {
-            stopsAndQuaysDataset = Files.newInputStream(Path.of(configuration.stopsAndQuaysDataset()));
+    private void loadStopAreasFromDataset(Path datasetPath, DefaultStopAreaRepository stopAreaRepository) throws ConversionException {
+        try (InputStream stopsAndQuaysDataset = Files.newInputStream(datasetPath)) {
+            logger.info("Loading stop areas from dataset '{}'", datasetPath);
+            stopAreaRepository.loadStopAreas(stopsAndQuaysDataset);
         } catch (IOException e) {
-            throw new ConversionException("Could not read stops and quats dataset file from '" + configuration.stopsAndQuaysDataset() + "'", e);
+            throw new ConversionException("Could not read stops and quays dataset file from '" + datasetPath + "'", e);
         }
+    }
+
+    private boolean isEmpty(StopAreaRepository stopAreaRepository) {
+        try {
+            return stopAreaRepository.getAllQuays().isEmpty();
+        } catch (NullPointerException npe) {
+            return true;
+        }
+    }
+
+    private void checkStopAreas(StopAreaRepository stopAreaRepository) throws ConversionException {
+        // Check that stop areas were loaded successfully, and they have coordinates, which are required for GTFS export.
+        if (isEmpty(stopAreaRepository)) {
+            throw new ConversionException("No stop areas were loaded from the provided datasets, cannot continue with GTFS export");
+        }
+
+        List<String> quaysWithoutCoords = stopAreaRepository.getAllQuays().stream()
+                .filter(quay -> quay.getCentroid() == null)
+                .map(EntityStructure::getId)
+                .toList();
+
+        List<String> stopPlacesWithoutCoords = stopAreaRepository.getAllQuays().stream()
+                .map(quay -> stopAreaRepository.getStopPlaceByQuayId(quay.getId()))
+                .filter(stopPlace -> stopPlace.getCentroid() == null)
+                .map(EntityStructure::getId)
+                .toList();
+
+         if (!quaysWithoutCoords.isEmpty()) {
+             for (int i = 0; i < quaysWithoutCoords.size(); i++) {
+                 if (i >= 10) {
+                     logger.warn("Found additional {} Quays without coordinates", quaysWithoutCoords.size() - 10);
+                     break;
+                 }
+                 String quayId = quaysWithoutCoords.get(i);
+                 logger.warn("Quay with id '{}' is missing coordinates", quayId);
+             }
+             for (int i = 0; i < stopPlacesWithoutCoords.size(); i++) {
+                if (i >= 10) {
+                    logger.warn("Found additional {} StopPlaces without coordinates", quaysWithoutCoords.size() - 10);
+                    break;
+                }
+                String stopPlaceId = stopPlacesWithoutCoords.get(i);
+                logger.warn("StopPlace with id '{}' is missing coordinates", stopPlaceId);
+             }
+             throw new ConversionException("Some stop areas are missing coordinates, cannot continue with GTFS export");
+         }
+    }
+
+    private void convert(Configuration configuration, Path outputsDirectory) throws ConversionException {
         DefaultStopAreaRepository defaultStopAreaRepository = new DefaultStopAreaRepository();
-        defaultStopAreaRepository.loadStopAreas(stopsAndQuaysDataset);
+        if (!configuration.stopsOnly()) {
+            // Load stop areas from the timetable dataset if not in stopsOnly mode,
+            // as it contains the stop areas referenced by the timetable data.
+            // This ensures that all stop areas referenced by the timetable data are included in the GTFS export,
+            // even if they are missing from the stops and quays dataset.
+            loadStopAreasFromDataset(Path.of(Objects.requireNonNull(configuration.timetableDataset())), defaultStopAreaRepository);
+        }
+        if (isEmpty(defaultStopAreaRepository)) {
+            loadStopAreasFromDataset(Path.of(configuration.stopsAndQuaysDataset()), defaultStopAreaRepository);
+        }
+
+        // Validate that stop areas were loaded successfully and have coordinates before attempting GTFS export,
+        // as missing coordinates will cause the export to fail.
+        checkStopAreas(defaultStopAreaRepository);
 
         // NeTEX codespace.
         String codespace = configuration.codespace();
@@ -113,7 +177,7 @@ public class EnturNetexConverter {
         try {
             Files.copy(exportedGtfs, outputsDirectory.resolve("gtfs.zip"));
         } catch (IOException e) {
-            throw new ConversionException("Cannot ouput exported GTFS to file", e);
+            throw new ConversionException("Cannot output exported GTFS to file", e);
         }
     }
 }

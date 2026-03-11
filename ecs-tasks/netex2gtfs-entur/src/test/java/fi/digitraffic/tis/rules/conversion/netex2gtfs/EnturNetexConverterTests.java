@@ -74,6 +74,32 @@ class EnturNetexConverterTests {
         assertThat(Files.exists(output.resolve("gtfs.zip")), equalTo(false));
     }
 
+    @Test
+    @Tag("integration")
+    void testConversionNeTExWithStops() throws URISyntaxException, IOException {
+        Path timetable = loadResource("simple-netex.zip");
+        Path stopsAndQuays = loadResource("emptyStopsAndQuays.zip");
+
+        String[] args = generateConfiguration(input, false, timetable, stopsAndQuays, output);
+
+        EnturNetexConverter.main(args);
+
+        assertThat(Files.exists(output.resolve("gtfs.zip")), equalTo(true));
+    }
+
+    @Test
+    @Tag("integration")
+    void testConversionFailsNeTExWithStopsMissingCoords() throws URISyntaxException, IOException {
+        Path timetable = loadResource("simple-netex-missing-coords.zip");
+        Path stopsAndQuays = loadResource("emptyStopsAndQuays.zip");
+
+        String[] args = generateConfiguration(input, false, timetable, stopsAndQuays, output);
+
+        EnturNetexConverter.main(args);
+
+        assertThat(Files.exists(output.resolve("gtfs.zip")), equalTo(false));
+    }
+
     private String[] generateConfiguration(Path input, boolean stopsOnly, Path timetable, Path stopsAndQuays, Path output) throws IOException {
         Map<String, Object> config = new HashMap<>();
         config.put("codespace", "FTR");

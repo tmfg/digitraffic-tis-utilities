@@ -17,6 +17,6 @@ public class VacoGtfsExporter extends DefaultGtfsExporter {
      */
     public VacoGtfsExporter(String codespace, StopAreaRepository stopAreaRepository) {
         super(codespace, stopAreaRepository);
-        setStopProducer(new VacoStopProducer(stopAreaRepository, getGtfsDatasetRepository()));
+        setStopProducer(new VacoStopProducer(stopAreaRepository, new VacoGtfsRepository()));
     }
 }

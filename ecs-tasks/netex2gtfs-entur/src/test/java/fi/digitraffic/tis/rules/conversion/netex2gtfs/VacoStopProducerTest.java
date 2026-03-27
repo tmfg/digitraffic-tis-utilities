@@ -8,6 +8,7 @@ import org.onebusaway.gtfs.model.Stop;
 import org.rutebanken.netex.model.*;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.mock;
@@ -27,6 +28,7 @@ class VacoStopProducerTest {
     private static final double LATITUDE = 60.0;
     private static final String TEST_STOP_PLACE_NAME = "Test Stop";
     private static final String TEST_PRIVATE_CODE = "12345";
+    private static final String DIGIROAD_ID = "67890";
 
     @Test
     void testPrivateCodeIsCopiedToStopCode() {
@@ -110,6 +112,63 @@ class VacoStopProducerTest {
         assertNull(stop.getCode());
     }
 
+    @Test
+    void testDigiroadIdIsCopied() {
+        Quay quay = createTestQuay(QUAY_ID, LONGITUDE, LATITUDE);
+        quay.setKeyList(getKeyListStructure());
+        StopPlace stopPlace = createTestStopPlace(STOP_PLACE_ID);
+
+        StopAreaRepository stopAreaRepository = mock(StopAreaRepository.class);
+        when(stopAreaRepository.getStopPlaceByQuayId(QUAY_ID)).thenReturn(stopPlace);
+
+        GtfsDatasetRepository gtfsDatasetRepository = new DefaultGtfsRepository();
+        VacoStopProducer stopProducer = new VacoStopProducer(stopAreaRepository, gtfsDatasetRepository);
+
+        Stop stop = stopProducer.produceStopFromQuay(quay);
+
+        assertNotNull(stop);
+        assertEquals(DIGIROAD_ID, stop.getMtaStopId());
+    }
+
+    @Test
+    void testDigiroadIdIsIgnoredWhenKeyValuesAbsent() {
+        Quay quay = createTestQuay(QUAY_ID, LONGITUDE, LATITUDE);
+        StopPlace stopPlace = createTestStopPlace(STOP_PLACE_ID);
+
+        StopAreaRepository stopAreaRepository = mock(StopAreaRepository.class);
+        when(stopAreaRepository.getStopPlaceByQuayId(QUAY_ID)).thenReturn(stopPlace);
+
+        GtfsDatasetRepository gtfsDatasetRepository = new DefaultGtfsRepository();
+        VacoStopProducer stopProducer = new VacoStopProducer(stopAreaRepository, gtfsDatasetRepository);
+
+        Stop stop = stopProducer.produceStopFromQuay(quay);
+
+        assertNotNull(stop);
+        assertNull(stop.getMtaStopId());
+    }
+
+    @Test
+    void testDigiroadIdIsIgnoredWhenItsNull() {
+        Quay quay = createTestQuay(QUAY_ID, LONGITUDE, LATITUDE);
+        KeyListStructure keyListStructure = new KeyListStructure();
+        KeyValueStructure keyValueStructure = new KeyValueStructure();
+        keyValueStructure.setKey("digiroad_id");
+        keyListStructure.withKeyValue(List.of(keyValueStructure));
+        quay.setKeyList(keyListStructure);
+        StopPlace stopPlace = createTestStopPlace(STOP_PLACE_ID);
+
+        StopAreaRepository stopAreaRepository = mock(StopAreaRepository.class);
+        when(stopAreaRepository.getStopPlaceByQuayId(QUAY_ID)).thenReturn(stopPlace);
+
+        GtfsDatasetRepository gtfsDatasetRepository = new DefaultGtfsRepository();
+        VacoStopProducer stopProducer = new VacoStopProducer(stopAreaRepository, gtfsDatasetRepository);
+
+        Stop stop = stopProducer.produceStopFromQuay(quay);
+
+        assertNotNull(stop);
+        assertNull(stop.getMtaStopId());
+    }
+
     private StopPlace createTestStopPlace(String stopPlaceId) {
         StopPlace stopPlace = new StopPlace();
         stopPlace.setId(stopPlaceId);
@@ -129,5 +188,15 @@ class VacoStopProducerTest {
         centroid.setLocation(location);
         quay.setCentroid(centroid);
         return quay;
+    }
+
+    private KeyListStructure getKeyListStructure() {
+        KeyListStructure keyListStructure = new KeyListStructure();
+        KeyValueStructure keyValueStructure = new KeyValueStructure();
+        keyValueStructure.setKey("digiroad_id");
+        keyValueStructure.setValue(DIGIROAD_ID);
+        keyListStructure.withKeyValue(List.of(keyValueStructure));
+
+        return keyListStructure;
     }
 }

@@ -31,7 +31,12 @@ updates:
           - "*"
   # Keep Docker dependencies up to date
   - package-ecosystem: "docker"
-    directory: "/"
+    directories:
+      - "/ecs-tasks/netex2gtfs-entur"
+      - "/ecs-tasks/netex-entur"
+      - "/ecs-tasks/gbfs-entur"
+      - "/ecs-tasks/gtfs-canonical"
+      - "/ecs-tasks/gtfs2netex-fintraffic"
     schedule:
       interval: "monthly"
     cooldown:

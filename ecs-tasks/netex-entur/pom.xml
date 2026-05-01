@@ -54,7 +54,7 @@
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
         <cyclonedx-maven-plugin.version>2.9.1</cyclonedx-maven-plugin.version>
-        <netex-validator.version>11.0.28</netex-validator.version>
+        <netex-validator.version>12.0.0</netex-validator.version>
     </properties>
 
     <dependencyManagement>

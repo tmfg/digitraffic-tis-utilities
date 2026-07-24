@@ -29,7 +29,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN mkdir -p /app/tmp
 
 # Trivy rootfs scan
-FROM aquasec/trivy:0.69.1 AS sbom-generator
+FROM aquasec/trivy:0.71.0 AS sbom-generator
 COPY --from=app / /scanroot
 RUN trivy rootfs --format cyclonedx --output /trivy-bom.json /scanroot
 

@@ -1,4 +1,4 @@
 boto3==1.42.96
 botocore==1.42.96
-sh==2.2.2
+sh==2.2.4
 uritools==6.0.2

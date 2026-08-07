@@ -2,7 +2,7 @@ package fi.digitraffic.tis.rules.validation.gbfs;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import org.entur.gbfs.validation.model.FileValidationResult;
+import org.mobilitydata.gbfs.validation.model.FileValidationResult;
 import org.immutables.value.Value;
 
 import java.util.List;

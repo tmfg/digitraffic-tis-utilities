@@ -7,9 +7,9 @@ import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import fi.digitraffic.tis.rules.CorruptEntryException;
 import fi.digitraffic.tis.rules.RuleException;
-import org.entur.gbfs.validation.GbfsValidator;
-import org.entur.gbfs.validation.GbfsValidatorFactory;
-import org.entur.gbfs.validation.model.FileValidationResult;
+import org.mobilitydata.gbfs.validation.GbfsValidator;
+import org.mobilitydata.gbfs.validation.GbfsValidatorFactory;
+import org.mobilitydata.gbfs.validation.model.FileValidationResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

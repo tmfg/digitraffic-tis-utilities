@@ -48,7 +48,7 @@
         <hamcrest.version>3.0</hamcrest.version>
         <junit5.version>5.9.2</junit5.version>
         <mockito.version>5.23.0</mockito.version>
-        <gbfs.validator.version>2.0.70</gbfs.validator.version>
+        <gbfs.validator.version>3.1.0</gbfs.validator.version>
         <!-- derived properties -->
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <!-- Maven plugin properties -->
@@ -131,9 +131,9 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Entur GBFS Validator -->
+        <!-- GBFS Validator (formerly Entur, relocated to MobilityData) -->
         <dependency>
-            <groupId>org.entur.gbfs</groupId>
+            <groupId>org.mobilitydata</groupId>
             <artifactId>gbfs-validator-java</artifactId>
             <version>${gbfs.validator.version}</version>
         </dependency>

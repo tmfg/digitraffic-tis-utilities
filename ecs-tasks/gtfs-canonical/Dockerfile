@@ -2,7 +2,7 @@ FROM python:3.14.6-slim-bookworm AS app
 ENV JAVA_HOME=/opt/java/openjdk
 
 COPY --from=eclipse-temurin:21.0.9_10-jre-noble $JAVA_HOME $JAVA_HOME
-COPY --from=ghcr.io/mobilitydata/gtfs-validator:5.0.1 /gtfs-validator-cli.jar /gtfs-validator-cli.jar
+COPY --from=ghcr.io/mobilitydata/gtfs-validator:8.0.1 /gtfs-validator-cli.jar /gtfs-validator-cli.jar
 
 ### copy of ENVs from merged images
 ENV PATH /usr/local/bin:$PATH

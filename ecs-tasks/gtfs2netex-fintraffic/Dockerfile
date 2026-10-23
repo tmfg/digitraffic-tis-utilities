@@ -1,16 +1,16 @@
+# Dependabot updates only images named in FROM lines, so each merged image has its own stage
+FROM python:3.14.2-alpine3.23 AS python
+FROM node:24.22.1-alpine3.23 AS node
+
 FROM alpine:3.23 AS app
 
-COPY --from=python:3.14.2-alpine3.23 / /
-COPY --from=node:24.22.0-alpine3.23 / /
+COPY --from=python / /
+COPY --from=node / /
 COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.136.0 /usr/src/app/ /
 
 ### copy of ENVs from merged images
 ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 ENV PATH=/usr/local/bin:$PATH
-ENV PYTHON_VERSION=3.14.2
-ENV PYTHON_PIP_VERSION=25.2
-ENV NODE_VERSION=24.22.0
-ENV YARN_VERSION=1.22.22
 # both
 ENV LANG=C.UTF-8
 

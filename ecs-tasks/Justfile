@@ -30,3 +30,9 @@ shell rulename: (build rulename)
     -it \
     --entrypoint /bin/bash \
     ecs-task-{{rulename}}
+
+# Run wrapper unit tests (no AWS needed). Creates a virtualenv in .venv-wrapper-tests.
+test:
+  python3 -m venv .venv-wrapper-tests
+  .venv-wrapper-tests/bin/pip install -q -r wrapper-tests/requirements-dev.txt
+  .venv-wrapper-tests/bin/python -m pytest wrapper-tests

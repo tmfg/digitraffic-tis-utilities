@@ -20,3 +20,8 @@ scratch.*
 
 # tool output directories
 **/out/
+
+# Python
+__pycache__/
+.pytest_cache/
+.venv-wrapper-tests/

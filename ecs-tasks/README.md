@@ -32,6 +32,32 @@ for example:
 just run gtfs-canonical
 ```
 
+## Wrapper runtime settings
+
+The shared `wrapper/app.py` reads these optional environment variables. The infrastructure sets both per environment.
+
+ - `IDLE_TIMEOUT_SECONDS`: unset or `0` exits on the first empty receive. A value above `0` long-polls the queue
+   (up to 20 s per call) and exits after that many seconds without messages. An invalid value is treated as `0` with a
+   warning.
+ - `TASK_PROTECTION_MINUTES`: when set and `ECS_AGENT_URI` is set (Fargate), the task enables ECS scale-in protection
+   with this expiry while it processes a job. A failed call is logged and the job still runs. Unset means no
+   protection calls, as in LocalStack and `just run`.
+
+Regardless of the variables:
+
+ - `/app/tmp` is emptied after each job (`app-tmp` on the host with `just run`).
+ - SIGTERM stops receiving. A received but unstarted message is returned to the queue.
+ - Each job logs `queue_wait rule=<rule> entryId=<id> wait_ms=<ms>`.
+
+## Wrapper tests
+
+```shell
+just test
+```
+
+Runs pytest in `wrapper-tests/` inside a virtualenv (`.venv-wrapper-tests`) and needs Python 3.12 or later. The tests
+live outside `wrapper/`, so they are not copied into the images.
+
 ## Development Pointers
 
  - When composing Dockerfile from multiple other images, the base images **must** match!

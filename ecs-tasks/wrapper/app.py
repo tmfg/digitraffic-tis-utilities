@@ -3,8 +3,11 @@ import json
 import logging
 import os
 import shutil
+import signal
 import tempfile
+import threading
 import time
+import urllib.request
 from logging.config import fileConfig
 
 import boto3
@@ -20,6 +23,10 @@ TEMP_ROOT = '/app/tmp'
 tempfile.tempdir = TEMP_ROOT
 # SQS allows at most 20 seconds per long poll
 MAX_LONG_POLL_SECONDS = 20
+# the ECS agent endpoint is local to the task, so a slow answer means something is wrong
+TASK_PROTECTION_TIMEOUT_SECONDS = 5
+# set by the SIGTERM handler; checked between receives and before a job starts
+STOP_REQUESTED = threading.Event()
 
 
 # original from https://stackoverflow.com/a/62945526/44523
@@ -186,6 +193,41 @@ def log_queue_wait(rule_name, job_message, job):
     logger.info(f"queue_wait rule={rule_name} entryId={job['entry']['publicId']} wait_ms={wait_ms}")
 
 
+def request_stop(signum, frame):
+    """SIGTERM handler: stop taking new work. A running job is left to finish."""
+    STOP_REQUESTED.set()
+
+
+def set_task_protection(enabled):
+    """
+    Turns ECS scale-in protection on or off through the task's ECS agent endpoint.
+
+    Does nothing unless both ECS_AGENT_URI and TASK_PROTECTION_MINUTES are set. Never raises: a failed call is
+    logged, because losing protection is better than failing the job.
+    """
+    agent_uri = os.environ.get('ECS_AGENT_URI')
+    minutes = os.environ.get('TASK_PROTECTION_MINUTES')
+    if not agent_uri or not minutes:
+        return
+    state = 'enable' if enabled else 'disable'
+    try:
+        body = {'ProtectionEnabled': enabled}
+        if enabled:
+            body['ExpiresInMinutes'] = int(minutes)
+        request = urllib.request.Request(f"{agent_uri}/task-protection/v1/state",
+                                         data=json.dumps(body).encode('utf-8'),
+                                         headers={'Content-Type': 'application/json'},
+                                         method='PUT')
+        with urllib.request.urlopen(request, timeout=TASK_PROTECTION_TIMEOUT_SECONDS) as response:
+            result = json.loads(response.read() or '{}')
+        # the agent can answer 200 and still report a failure, for example DEPLOYMENT_BLOCKED or throttling
+        problem = result.get('failure') or result.get('error')
+        if problem:
+            logger.warning(f"Task protection {state} failed: {problem}")
+    except Exception:
+        logger.warning(f"Task protection {state} failed", exc_info=True)
+
+
 def run_task(workdir, rule_name):
     aws = {
         's3': {
@@ -203,6 +245,9 @@ def run_task(workdir, rule_name):
     idle_timeout = get_idle_timeout_seconds()
     idle_since = time.monotonic()
     while True:
+        if STOP_REQUESTED.is_set():
+            logger.info("Stop requested, not receiving more messages")
+            break
         receive_args = {'MaxNumberOfMessages': 1, 'AttributeNames': ['SentTimestamp']}
         wait_seconds = 0
         if idle_timeout > 0:
@@ -218,24 +263,37 @@ def run_task(workdir, rule_name):
                 break
             continue
         for job_message in messages:
+            if STOP_REQUESTED.is_set():
+                # a long poll is not interrupted by the signal, so a message can arrive after SIGTERM
+                logger.info("Stop requested, returning received message to the queue")
+                try:
+                    job_message.change_visibility(VisibilityTimeout=0)
+                except Exception:
+                    # the message returns to the queue after its visibility timeout anyway
+                    logger.warning("Failed to make received message visible again", exc_info=True)
+                continue
             handle_message(rule_name, aws, workdir, job_message)
         idle_since = time.monotonic()
 
 
 def handle_message(rule_name, aws, workdir, job_message):
-    logger.info(f"Processing message {str(job_message)}")
-    job = json.loads(job_message.body)
-    log_queue_wait(rule_name, job_message, job)
-    logger.info(f"Processing job for publicID: {str(job["entry"]["publicId"])} :> {str(job)}")
+    # protection comes first so the window between receive and protection stays as short as possible
+    set_task_protection(True)
     try:
+        logger.info(f"Processing message {str(job_message)}")
+        job = json.loads(job_message.body)
+        log_queue_wait(rule_name, job_message, job)
+        logger.info(f"Processing job for publicID: {str(job["entry"]["publicId"])} :> {str(job)}")
         process_job(rule_name, aws, os.path.join(workdir, job["entry"]["publicId"], str(int(time.time()))), job)
         job_message.delete()
     finally:
+        set_task_protection(False)
         # jobs run one at a time, so nothing under the temp root belongs to anyone else
         empty_directory(TEMP_ROOT, keep=workdir)
 
 
 def main(rule_name):
+    signal.signal(signal.SIGTERM, request_stop)
     if os.environ.get("LOCALSTACK_ENDPOINT_URL"):
         # we're in Localstack environment
         logger.info(f"Process running in Localstack, using {os.environ.get('LOCALSTACK_ENDPOINT_URL')} as endpoint URL with hardcoded AWS dummy credentials")

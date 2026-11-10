@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import os
+import shutil
 import tempfile
 import time
 from logging.config import fileConfig
@@ -13,9 +14,12 @@ from uritools import urisplit, uriunsplit, urijoin
 # NOTE: this rule script will be overwritten in Docker containers! The default is just an echo function.
 import rule
 
-fileConfig('logging_config.ini', disable_existing_loggers=False)
+fileConfig(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logging_config.ini'), disable_existing_loggers=False)
 logger = logging.getLogger()
-tempfile.tempdir = '/app/tmp'
+TEMP_ROOT = '/app/tmp'
+tempfile.tempdir = TEMP_ROOT
+# SQS allows at most 20 seconds per long poll
+MAX_LONG_POLL_SECONDS = 20
 
 
 # original from https://stackoverflow.com/a/62945526/44523
@@ -143,6 +147,45 @@ def munge(rule_name):
     return f'rules-processing-{rule_name.replace(".", "-")}'.lower()
 
 
+def get_idle_timeout_seconds():
+    """How long to wait for a message before exiting. Unset, 0 or invalid means exit on the first empty receive."""
+    value = os.environ.get('IDLE_TIMEOUT_SECONDS') or 0
+    try:
+        return max(0, int(value))
+    except ValueError:
+        logger.warning(f"Invalid IDLE_TIMEOUT_SECONDS '{value}', not waiting for messages")
+        return 0
+
+
+def empty_directory(path, keep=None):
+    """Remove everything inside path. The directory `keep` is emptied instead of removed. Never raises."""
+    try:
+        if not os.path.isdir(path):
+            return
+        with os.scandir(path) as entries:
+            for entry in list(entries):
+                try:
+                    if keep is not None and os.path.abspath(entry.path) == os.path.abspath(keep):
+                        empty_directory(entry.path)
+                    elif entry.is_dir(follow_symlinks=False):
+                        shutil.rmtree(entry.path)
+                    else:
+                        os.unlink(entry.path)
+                except OSError:
+                    logger.warning(f"Failed to remove {entry.path}", exc_info=True)
+    except OSError:
+        logger.warning(f"Failed to clean {path}", exc_info=True)
+
+
+def log_queue_wait(rule_name, job_message, job):
+    """Logs a key=value line for Logs Insights: parse @message "queue_wait rule=* entryId=* wait_ms=*"."""
+    sent_ms = (job_message.attributes or {}).get('SentTimestamp')
+    if sent_ms is None:
+        return
+    wait_ms = max(0, int(time.time() * 1000) - int(sent_ms))
+    logger.info(f"queue_wait rule={rule_name} entryId={job['entry']['publicId']} wait_ms={wait_ms}")
+
+
 def run_task(workdir, rule_name):
     aws = {
         's3': {
@@ -157,16 +200,39 @@ def run_task(workdir, rule_name):
 
     job_queue = aws['sqs']['resource'].get_queue_by_name(QueueName=munge(rule_name))  # TODO: the correct name
     logger.info(f"Run task for jobQueue: {str(job_queue)} ")
-    contains_messages = True
-    while contains_messages:
-        messages = job_queue.receive_messages(MaxNumberOfMessages=1)
-        contains_messages = len(messages) > 0
+    idle_timeout = get_idle_timeout_seconds()
+    idle_since = time.monotonic()
+    while True:
+        receive_args = {'MaxNumberOfMessages': 1, 'AttributeNames': ['SentTimestamp']}
+        wait_seconds = 0
+        if idle_timeout > 0:
+            remaining = idle_timeout - (time.monotonic() - idle_since)
+            if remaining <= 0:
+                break
+            wait_seconds = min(MAX_LONG_POLL_SECONDS, int(remaining))
+            receive_args['WaitTimeSeconds'] = wait_seconds
+        messages = job_queue.receive_messages(**receive_args)
+        if not messages:
+            # without idle wait: queue is empty, exit. With it: a final short poll (under 1 s left) found nothing.
+            if idle_timeout <= 0 or wait_seconds == 0:
+                break
+            continue
         for job_message in messages:
-            logger.info(f"Processing message {str(job_message)}")
-            job = json.loads(job_message.body)
-            logger.info(f"Processing job for publicID: {str(job["entry"]["publicId"])} :> {str(job)}")
-            process_job(rule_name, aws, os.path.join(workdir, job["entry"]["publicId"], str(int(time.time()))), job)
-            job_message.delete()
+            handle_message(rule_name, aws, workdir, job_message)
+        idle_since = time.monotonic()
+
+
+def handle_message(rule_name, aws, workdir, job_message):
+    logger.info(f"Processing message {str(job_message)}")
+    job = json.loads(job_message.body)
+    log_queue_wait(rule_name, job_message, job)
+    logger.info(f"Processing job for publicID: {str(job["entry"]["publicId"])} :> {str(job)}")
+    try:
+        process_job(rule_name, aws, os.path.join(workdir, job["entry"]["publicId"], str(int(time.time()))), job)
+        job_message.delete()
+    finally:
+        # jobs run one at a time, so nothing under the temp root belongs to anyone else
+        empty_directory(TEMP_ROOT, keep=workdir)
 
 
 def main(rule_name):

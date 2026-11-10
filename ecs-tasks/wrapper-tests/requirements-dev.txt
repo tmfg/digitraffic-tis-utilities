@@ -1,0 +1,2 @@
+-r ../wrapper/requirements.txt
+pytest==9.0.3

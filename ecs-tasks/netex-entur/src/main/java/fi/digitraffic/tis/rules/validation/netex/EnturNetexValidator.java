@@ -89,10 +89,17 @@ public class EnturNetexValidator {
 
     private static Path findInputFile(Arguments arguments) {
         // lookup alternatives: gtfs2netex may run this task as transitive, in which case we want to use its input
-        Path converterInput = arguments.inputPath.resolve("gtfs2netex.fintraffic/result.zip");
-        if (Files.exists(converterInput)) {
-            return converterInput;
+        Path gtfs2netexConverterInput = arguments.inputPath.resolve("gtfs2netex.fintraffic/result.zip");
+        if (Files.exists(gtfs2netexConverterInput)) {
+            return gtfs2netexConverterInput;
         }
+
+        // lookup alternatives: gtfs2netex may run this task as transitive, in which case we want to use its input
+        Path ssim2netexConverterInput = arguments.inputPath.resolve("ssim2netex.fintraffic/result.zip");
+        if (Files.exists(ssim2netexConverterInput)) {
+            return ssim2netexConverterInput;
+        }
+
         // use generic input
         String fileName = arguments.fileName != null
                 ? arguments.fileName

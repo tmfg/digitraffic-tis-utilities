@@ -6,7 +6,7 @@ FROM alpine:3.24 AS app
 
 COPY --from=python / /
 COPY --from=node / /
-COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.145.0 /usr/src/app/ /
+COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex:0.146.0 /usr/src/app/ /
 
 ### copy of ENVs from merged images
 ENV PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin

@@ -1,0 +1,89 @@
+# Runs the rule workers against the local VACO development environment (LocalStack).
+#
+# Prerequisite: `docker compose up` in digitraffic-tis-vaco, which creates the `tis_tis` network, LocalStack and the queues.
+#
+# Each worker keeps polling its queue (IDLE_TIMEOUT_SECONDS) and is restarted after the timeout, so entries submitted through
+# the UI are processed without running `just run <rule>` for every rule. Use `just up`, `just logs` and `just down`.
+name: tis-rules
+
+x-rule: &rule
+  platform: linux/amd64
+  read_only: true
+  restart: unless-stopped
+  # ECS waits 30 seconds after SIGTERM before it kills a task
+  stop_grace_period: 30s
+  networks:
+    - tis
+  environment:
+    LOCALSTACK_ENDPOINT_URL: http://localstack:4566
+    # seconds a worker waits for the next message before exiting; it is then restarted
+    IDLE_TIMEOUT_SECONDS: ${IDLE_TIMEOUT_SECONDS:-3600}
+
+services:
+  gtfs-canonical:
+    <<: *rule
+    image: ecs-task-gtfs-canonical
+    build:
+      context: .
+      dockerfile: gtfs-canonical/Dockerfile
+      args:
+        GITHUB_SHA: ${GITHUB_SHA:-local}
+    volumes:
+      - gtfs-canonical-tmp:/app/tmp
+
+  netex-entur:
+    <<: *rule
+    image: ecs-task-netex-entur
+    build:
+      context: .
+      dockerfile: netex-entur/Dockerfile
+      args:
+        GITHUB_SHA: ${GITHUB_SHA:-local}
+    volumes:
+      - netex-entur-tmp:/app/tmp
+
+  netex2gtfs-entur:
+    <<: *rule
+    image: ecs-task-netex2gtfs-entur
+    build:
+      context: .
+      dockerfile: netex2gtfs-entur/Dockerfile
+      args:
+        GITHUB_SHA: ${GITHUB_SHA:-local}
+    volumes:
+      - netex2gtfs-entur-tmp:/app/tmp
+
+  gtfs2netex-fintraffic:
+    <<: *rule
+    image: ecs-task-gtfs2netex-fintraffic
+    build:
+      context: .
+      dockerfile: gtfs2netex-fintraffic/Dockerfile
+      args:
+        GITHUB_SHA: ${GITHUB_SHA:-local}
+    volumes:
+      - gtfs2netex-fintraffic-tmp:/app/tmp
+
+  gbfs-entur:
+    <<: *rule
+    image: ecs-task-gbfs-entur
+    build:
+      context: .
+      dockerfile: gbfs-entur/Dockerfile
+      args:
+        GITHUB_SHA: ${GITHUB_SHA:-local}
+    volumes:
+      - gbfs-entur-tmp:/app/tmp
+
+# a separate temp volume per rule: a worker empties /app/tmp after each job, which must not touch another worker's files
+volumes:
+  gtfs-canonical-tmp:
+  netex-entur-tmp:
+  netex2gtfs-entur-tmp:
+  gtfs2netex-fintraffic-tmp:
+  gbfs-entur-tmp:
+
+networks:
+  tis:
+    name: tis_tis
+    external: true

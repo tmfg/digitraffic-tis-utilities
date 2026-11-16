@@ -1,8 +1,8 @@
 # Dependabot updates only images named in FROM lines, so each merged image has its own stage
-FROM eclipse-temurin:21.0.9_10-jre-noble AS java
+FROM eclipse-temurin:21.0.12.1_1-jre-noble AS java
 FROM ghcr.io/mobilitydata/gtfs-validator:8.0.1 AS gtfs-validator
 
-FROM python:3.14.6-slim-bookworm AS app
+FROM python:3.15.0-slim-bookworm AS app
 ENV JAVA_HOME=/opt/java/openjdk
 
 COPY --from=java $JAVA_HOME $JAVA_HOME
@@ -26,7 +26,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN mkdir -p /app/tmp
 
 # Generate SBOM
-FROM aquasec/trivy:0.71.0 AS sbom-generator
+FROM aquasec/trivy:0.76.2 AS sbom-generator
 COPY --from=app / /scanroot
 RUN trivy rootfs --format cyclonedx --output /bom.json /scanroot
 

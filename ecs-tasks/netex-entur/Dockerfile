@@ -1,9 +1,9 @@
-FROM maven:3.9.15-eclipse-temurin-26-noble AS build
+FROM maven:3.9-eclipse-temurin-26-noble AS build
 ARG GITHUB_SHA
 COPY ./netex-entur /
 RUN mvn package -DskipTests -Dsbom.filename=${GITHUB_SHA}
 
-FROM python:3.14.7-slim-bookworm AS app
+FROM python:3.15.0-slim-bookworm AS app
 ENV JAVA_HOME=/opt/java/openjdk
 COPY --from=build /target/validation-netex-entur-jar-with-dependencies.jar /validation-netex-entur.jar
 COPY --from=eclipse-temurin:21.0.9_10-jre-noble $JAVA_HOME $JAVA_HOME
@@ -29,7 +29,7 @@ RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN mkdir -p /app/tmp
 
 # Trivy rootfs scan
-FROM aquasec/trivy:0.71.0 AS sbom-generator
+FROM aquasec/trivy:0.76.2 AS sbom-generator
 COPY --from=app / /scanroot
 RUN trivy rootfs --format cyclonedx --output /trivy-bom.json /scanroot
 

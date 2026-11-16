@@ -1,8 +1,8 @@
 # Dependabot updates only images named in FROM lines, so each merged image has its own stage
-FROM python:3.14.2-alpine3.23 AS python
-FROM node:24.22.1-alpine3.23 AS node
+FROM python:3.15.0-alpine3.23 AS python
+FROM node:24.22.2-alpine3.23 AS node
 
-FROM alpine:3.23 AS app
+FROM alpine:3.24 AS app
 
 COPY --from=python / /
 COPY --from=node / /
@@ -28,7 +28,7 @@ RUN apk add bash \
 RUN mkdir -p /app/tmp
 
 # Generate SBOM
-FROM aquasec/trivy:0.71.0 AS sbom-generator
+FROM aquasec/trivy:0.76.2 AS sbom-generator
 COPY --from=app / /scanroot
 RUN trivy rootfs --format cyclonedx --output /bom.json /scanroot
 

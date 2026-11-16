@@ -42,7 +42,7 @@
         <sbom.filename>bom</sbom.filename>
         <!-- BOM properties -->
         <immutables.version>2.12.2</immutables.version>
-        <jackson.version>2.22.0</jackson.version>
+        <jackson.version>2.23.0</jackson.version>
         <junit.version>6.1.0</junit.version>
         <!-- library properties -->
         <hamcrest.version>3.0</hamcrest.version>
@@ -54,7 +54,7 @@
         <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
         <maven-shade-plugin.version>3.5.1</maven-shade-plugin.version>
         <cyclonedx-maven-plugin.version>2.9.2</cyclonedx-maven-plugin.version>
-        <netex-validator.version>12.0.0</netex-validator.version>
+        <netex-validator.version>12.1.1</netex-validator.version>
     </properties>
 
     <dependencyManagement>
@@ -88,7 +88,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.35</version>
+            <version>1.6.6</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

@@ -43,7 +43,7 @@
         <sbom.filename>bom</sbom.filename>
         <!-- BOM properties -->
         <immutables.version>2.12.2</immutables.version>
-        <jackson.version>2.22.0</jackson.version>
+        <jackson.version>2.23.0</jackson.version>
         <junit.version>6.1.0</junit.version>
         <!-- library properties -->
         <hamcrest.version>3.0</hamcrest.version>
@@ -89,7 +89,7 @@
         <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
-            <version>1.5.35</version>
+            <version>1.6.6</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

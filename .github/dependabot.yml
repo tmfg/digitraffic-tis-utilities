@@ -1,11 +1,9 @@
 version: 2
 updates:
-  # Keep Maven dependencies up to date
+  # Keep Maven dependencies up to date. One entry per rule so that each rule gets its own PRs
+  # (a group in an entry with several directories would combine them into one PR).
   - package-ecosystem: "maven"
-    directories:
-      - "/ecs-tasks/netex2gtfs-entur"
-      - "/ecs-tasks/netex-entur"
-      - "/ecs-tasks/gbfs-entur"
+    directory: "/ecs-tasks/netex2gtfs-entur"
     schedule:
       interval: "monthly"
     cooldown:
@@ -28,6 +26,68 @@ updates:
         update-types:
           - "patch"
       # Minor updates. Major updates are not listed, so they open as individual PRs.
+      dev-deps:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types:
+          - "minor"
+      prod-deps:
+        applies-to: version-updates
+        dependency-type: "production"
+        update-types:
+          - "minor"
+  - package-ecosystem: "maven"
+    directory: "/ecs-tasks/netex-entur"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7 # Wait 7 days for any update
+      semver-major-days: 14 # Wait 14 days for major version bumps
+    groups:
+      security-patches:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      # Must stay first among the version-update groups: a dependency goes to the first matching group.
+      patches:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      dev-deps:
+        applies-to: version-updates
+        dependency-type: "development"
+        update-types:
+          - "minor"
+      prod-deps:
+        applies-to: version-updates
+        dependency-type: "production"
+        update-types:
+          - "minor"
+  - package-ecosystem: "maven"
+    directory: "/ecs-tasks/gbfs-entur"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7 # Wait 7 days for any update
+      semver-major-days: 14 # Wait 14 days for major version bumps
+    groups:
+      security-patches:
+        applies-to: security-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
+      # Must stay first among the version-update groups: a dependency goes to the first matching group.
+      patches:
+        applies-to: version-updates
+        patterns:
+          - "*"
+        update-types:
+          - "patch"
       dev-deps:
         applies-to: version-updates
         dependency-type: "development"
@@ -62,21 +122,15 @@ updates:
         update-types:
           - "minor"
           - "patch"
-  # Keep Docker dependencies up to date
+  # Keep Docker dependencies up to date. One entry per rule so that each rule gets its own PR.
+  # Patch and minor image updates of a rule are grouped; major updates open as individual PRs.
   - package-ecosystem: "docker"
-    directories:
-      - "/ecs-tasks/netex2gtfs-entur"
-      - "/ecs-tasks/netex-entur"
-      - "/ecs-tasks/gbfs-entur"
-      - "/ecs-tasks/gtfs-canonical"
-      - "/ecs-tasks/gtfs2netex-fintraffic"
+    directory: "/ecs-tasks/netex2gtfs-entur"
     schedule:
       interval: "monthly"
     cooldown:
       default-days: 7 # Wait 7 days for any update
     groups:
-      # One PR for patch and minor image updates across all rule directories.
-      # Major updates are not listed, so they open as individual PRs.
       docker-deps:
         patterns:
           - "*"
@@ -89,6 +143,75 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "maven"
         update-types: ["version-update:semver-major"]
+  - package-ecosystem: "docker"
+    directory: "/ecs-tasks/netex-entur"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7 # Wait 7 days for any update
+    groups:
+      docker-deps:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Ignore updates to Java versions other than 21
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "maven"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: "docker"
+    directory: "/ecs-tasks/gbfs-entur"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7 # Wait 7 days for any update
+    groups:
+      docker-deps:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Ignore updates to Java versions other than 21
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "maven"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: "docker"
+    directory: "/ecs-tasks/gtfs-canonical"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7 # Wait 7 days for any update
+    groups:
+      docker-deps:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
+      # Ignore updates to Java versions other than 21
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
+  - package-ecosystem: "docker"
+    directory: "/ecs-tasks/gtfs2netex-fintraffic"
+    schedule:
+      interval: "monthly"
+    cooldown:
+      default-days: 7 # Wait 7 days for any update
+    groups:
+      docker-deps:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    ignore:
       # Ignore updates to Node versions other than 24
       - dependency-name: "node"
         update-types: [ "version-update:semver-major" ]

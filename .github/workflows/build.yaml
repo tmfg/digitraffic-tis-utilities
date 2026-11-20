@@ -1,0 +1,134 @@
+name: "Verify Commit"
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  maven:
+    name: "Maven ${{ matrix.module }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in sync with the Java modules in the maven directories of .github/dependabot.yml
+        # (the rules without a Maven build, gtfs-canonical and gtfs2netex-fintraffic, are not listed)
+        module:
+          - netex-entur
+          - netex2gtfs-entur
+          - gbfs-entur
+
+    defaults:
+      run:
+        working-directory: ./ecs-tasks/${{ matrix.module }}
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Build and test on JDK 21, the JDK the rule images run on (the poms compile for release 17);
+      # keep in sync with the JRE in the Dockerfiles
+      - name: Set up JDK
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+          cache-dependency-path: ecs-tasks/${{ matrix.module }}/pom.xml
+
+      - name: Build and test
+        run: mvn -B package
+
+  docker:
+    name: "Docker ${{ matrix.rule }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # A job-level permissions block replaces the workflow-level one, so contents: read is repeated.
+    permissions:
+      contents: read
+      packages: read
+
+    defaults:
+      run:
+        working-directory: ./ecs-tasks
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in sync with the rules in .github/workflows/push_image.yml and the docker directories
+        # of .github/dependabot.yml
+        include:
+          - rule: gbfs-entur
+            tool: java -version
+          - rule: gtfs-canonical
+            tool: java -version
+          - rule: gtfs2netex-fintraffic
+            tool: node --version
+          - rule: netex-entur
+            tool: java -version
+          - rule: netex2gtfs-entur
+            tool: java -version
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Needed for the private gtfs2netex-fintraffic base image on GHCR; harmless for the other rules
+      - name: Login to GHCR
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build image
+        env:
+          RULE: ${{ matrix.rule }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: docker build --build-arg GITHUB_SHA="$COMMIT_SHA" -t "rule-$RULE:pr" -f "./$RULE/Dockerfile" .
+
+      - name: Smoke test wrapper
+        env:
+          RULE: ${{ matrix.rule }}
+        run: docker run --rm --entrypoint python "rule-$RULE:pr" -c "import app"
+
+      - name: Smoke test runtime tooling
+        env:
+          RULE: ${{ matrix.rule }}
+          TOOL: ${{ matrix.tool }}
+        run: docker run --rm --entrypoint sh "rule-$RULE:pr" -c "$TOOL"
+
+  # The single check to make required. always() makes it run, and fail, when a needed job
+  # fails or is skipped; without it the check would be skipped and stay pending.
+  verify:
+    name: Verify Pull Request
+    runs-on: ubuntu-latest
+    needs: [ maven, docker ]
+    if: always()
+    timeout-minutes: 5
+
+    steps:
+      - name: Check results of required jobs
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          echo "$NEEDS"
+          if ! echo "$NEEDS" | jq -e 'all(.[]; .result == "success")' > /dev/null; then
+            echo "A required job did not succeed"
+            exit 1
+          fi

@@ -2,7 +2,7 @@ FROM python:3.14.2-slim-bookworm AS app
 ENV JAVA_HOME=/opt/java/openjdk
 
 COPY --from=eclipse-temurin:26-jre-noble $JAVA_HOME $JAVA_HOME
-COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-ssim2netex /digitraffic-tis-rules-ssim2netex.jar /digitraffic-tis-rules-ssim2netex.jar
+COPY --from=ghcr.io/tmfg/digitraffic-tis-rules-ssim2netex /app/digitraffic-tis-rules-ssim2netex.jar /digitraffic-tis-rules-ssim2netex.jar
 # For locally built image of digitraffic-tis-rules-ssim2netex, use this instead:
 #COPY --from=digitraffic-tis-rules-ssim2netex /app/digitraffic-tis-rules-ssim2netex.jar /digitraffic-tis-rules-ssim2netex.jar
 

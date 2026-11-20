@@ -1,4 +1,4 @@
-FROM python:3.14.2-slim-bookworm AS app
+FROM python:3.15.2-slim-bookworm AS app
 ENV JAVA_HOME=/opt/java/openjdk
 
 COPY --from=eclipse-temurin:26-jre-noble $JAVA_HOME $JAVA_HOME

@@ -2,7 +2,7 @@
 FROM eclipse-temurin:21.0.12.1_1-jre-noble AS java
 FROM ghcr.io/mobilitydata/gtfs-validator:8.0.1 AS gtfs-validator
 
-FROM python:3.15.0-slim-bookworm AS app
+FROM python:3.15.2-slim-bookworm AS app
 ENV JAVA_HOME=/opt/java/openjdk
 
 COPY --from=java $JAVA_HOME $JAVA_HOME

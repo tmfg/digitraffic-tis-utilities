@@ -12,16 +12,29 @@ build rulename:
 # Execute rule container identified by its name.
 [private]
 execute rulename:
+  mkdir -p app-tmp/{{rulename}}
   docker run --platform linux/amd64 \
     --rm \
     --read-only \
     --network=tis_tis \
-    -v $(pwd)/app-tmp:/app/tmp \
+    -v $(pwd)/app-tmp/{{rulename}}:/app/tmp \
     -e LOCALSTACK_ENDPOINT_URL=http://localstack:4566 \
     ecs-task-{{rulename}}
 
 # Run specific rule identified by its directory name
 run rule: (build rule) (execute rule)
+
+# Start rule workers (all, or the named rules) in the background; they keep polling their queues.
+up *rules:
+  GITHUB_SHA="$(git rev-parse HEAD)" docker compose up -d --build {{rules}}
+
+# Stop and remove the rule workers started with `up`.
+down:
+  docker compose down
+
+# Follow the logs of all rule workers (or only the named rules).
+logs *rules:
+  docker compose logs -f --tail=100 {{rules}}
 
 # Shell into rule container. Useful for debugging.
 shell rulename: (build rulename)
@@ -30,3 +43,9 @@ shell rulename: (build rulename)
     -it \
     --entrypoint /bin/bash \
     ecs-task-{{rulename}}
+
+# Run wrapper unit tests (no AWS needed). Creates a virtualenv in .venv-wrapper-tests.
+test:
+  python3 -m venv .venv-wrapper-tests
+  .venv-wrapper-tests/bin/pip install -q -r wrapper-tests/requirements-dev.txt
+  .venv-wrapper-tests/bin/python -m pytest wrapper-tests

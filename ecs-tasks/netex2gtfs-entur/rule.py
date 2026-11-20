@@ -8,7 +8,6 @@ logger = logging.getLogger()
 
 def run(job, input_dir, output_dir):
     # save configuration to inputs if any available in job
-    logger.info(f"   !configuration     {str(job["configuration"])}")
     configuration = job["configuration"]
     if configuration is None:
         configuration = dict()

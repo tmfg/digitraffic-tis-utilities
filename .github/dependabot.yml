@@ -37,6 +37,8 @@ updates:
       - "/ecs-tasks/gbfs-entur"
       - "/ecs-tasks/gtfs-canonical"
       - "/ecs-tasks/gtfs2netex-fintraffic"
+      - "/ecs-tasks/ssim-fintraffic"
+      - "/ecs-tasks/ssim2netex-fintraffic"
     schedule:
       interval: "monthly"
     cooldown:

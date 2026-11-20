@@ -29,6 +29,8 @@ jobs:
           - netex2gtfs-entur
           - gtfs2netex-fintraffic
           - gbfs-entur
+          - ssim-fintraffic
+          - ssim2netex-fintraffic
 
     steps:
       - name: Checkout Repository

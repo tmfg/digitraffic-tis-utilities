@@ -42,7 +42,7 @@ just run gtfs-canonical
 The rule runner supports [Localstack](https://www.localstack.cloud/) as runtime environment to make executing the rules
 simple. The recommended way is to reuse [vaco's](https://github.com/tmfg/digitraffic-tis-vaco) development environment.
 
-To enable this, you need to do do the following one-time configuration:
+To enable this, you need to do the following one-time configuration:
 
 ```shell
 ➜  ~ aws configure --profile localstack

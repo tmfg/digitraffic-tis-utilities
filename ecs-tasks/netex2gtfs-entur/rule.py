@@ -2,9 +2,9 @@ import sh
 import logging
 import os
 import json
+import shutil
 
 logger = logging.getLogger()
-
 
 def run(job, input_dir, output_dir):
     # save configuration to inputs if any available in job
@@ -12,10 +12,34 @@ def run(job, input_dir, output_dir):
     if configuration is None:
         configuration = dict()
 
+    stops_only = configuration.get('stopsOnly') is True
+    netex_package_path = os.path.join(input_dir, 'netex.zip')
+    stop_and_quays_path = os.path.join(input_dir, 'stopsAndQuays.zip')
+
+    ssim_converter_dir = os.path.join(input_dir, "ssim2netex.fintraffic")
+    ssim_converter_result = os.path.join(ssim_converter_dir, "result.zip")
+    ssim_conversion_result_exists = os.path.exists(ssim_converter_result)
+
+    if ssim_conversion_result_exists:
+        shutil.copy(ssim_converter_result, netex_package_path)
+
+    if ssim_conversion_result_exists:
+        flat_path = netex_package_path + '.flat'
+        with zipfile.ZipFile(netex_package_path) as src, \
+                zipfile.ZipFile(flat_path, 'w', zipfile.ZIP_DEFLATED) as dst:
+            for info in src.infolist():
+                if info.is_dir():
+                    continue
+                name = info.filename
+                if name.startswith('output/'):
+                    name = name[len('output/'):]
+                dst.writestr(name, src.read(info))
+        os.replace(flat_path, netex_package_path)
+
+    timetable_dataset = None if stops_only else netex_package_path
+    stops_and_quays_dataset = netex_package_path if stops_only else stop_and_quays_path
+
     with open(os.path.join(input_dir, 'config.json'), 'w') as config_file:
-        stops_only = configuration.get('stopsOnly') is True
-        timetable_dataset = None if stops_only else os.path.join(input_dir, 'netex.zip')
-        stops_and_quays_dataset = os.path.join(input_dir, 'netex.zip') if stops_only else os.path.join(input_dir, 'stopsAndQuays.zip')
         json.dump({
             'codespace': configuration['codespace'],
             'stopsOnly': stops_only,

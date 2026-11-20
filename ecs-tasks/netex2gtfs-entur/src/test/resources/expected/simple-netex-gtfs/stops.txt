@@ -1,0 +1,5 @@
+stop_id,stop_name,stop_lat,stop_lon,location_type,parent_station,vehicle_type
+OTH:Quay:1,Pysäkki 1,60.170600,24.941400,,OTH:StopPlace:1,700
+OTH:Quay:2,Pysäkki 2,60.197900,24.933800,,OTH:StopPlace:2,700
+OTH:StopPlace:1,Pysäkki 1,60.170600,24.941400,1,,700
+OTH:StopPlace:2,Pysäkki 2,60.197900,24.933800,1,,700

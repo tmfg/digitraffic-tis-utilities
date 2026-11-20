@@ -1,0 +1,3 @@
+trip_id,stop_id,arrival_time,departure_time,stop_sequence,pickup_type,drop_off_type
+OTH:ServiceJourney:s_1,OTH:Quay:1,08:00:00,08:00:00,1,,1
+OTH:ServiceJourney:s_1,OTH:Quay:2,08:10:00,08:10:00,2,1,

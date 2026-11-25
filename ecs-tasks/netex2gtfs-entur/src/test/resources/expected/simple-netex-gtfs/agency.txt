@@ -1,0 +1,2 @@
+agency_id,agency_name,agency_url,agency_timezone
+OTH:Authority:ABC,ABC Bus Operator,https://example.com,Europe/Helsinki

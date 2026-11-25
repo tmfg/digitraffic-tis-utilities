@@ -8,10 +8,16 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.equalTo;
@@ -89,6 +95,27 @@ class EnturNetexConverterTests {
 
     @Test
     @Tag("integration")
+    void testConversionOutputMatchesExpectedGtfs() throws URISyntaxException, IOException {
+        Path timetable = loadResource("simple-netex.zip");
+        Path stopsAndQuays = loadResource("emptyStopsAndQuays.zip");
+
+        String[] args = generateConfiguration(input, false, timetable, stopsAndQuays, output);
+
+        EnturNetexConverter.main(args);
+
+        Map<String, List<String>> actual = readZipFiles(output.resolve("gtfs.zip"));
+        Map<String, List<String>> expected = readExpectedFiles("expected/simple-netex-gtfs");
+
+        assertThat(actual.keySet(), equalTo(expected.keySet()));
+        expected.forEach((file, expectedLines) -> {
+            List<String> actualLines = actual.get(file);
+            assertThat(file + " header", actualLines.get(0), equalTo(expectedLines.get(0)));
+            assertThat(file + " rows", sortedRows(actualLines), equalTo(sortedRows(expectedLines)));
+        });
+    }
+
+    @Test
+    @Tag("integration")
     void testConversionFailsNeTExWithStopsMissingCoords() throws URISyntaxException, IOException {
         Path timetable = loadResource("simple-netex-missing-coords.zip");
         Path stopsAndQuays = loadResource("emptyStopsAndQuays.zip");
@@ -115,6 +142,33 @@ class EnturNetexConverterTests {
                 "--input", input.toString(),
                 "--output", output.toString()};
         return args;
+    }
+
+    private static Map<String, List<String>> readZipFiles(Path zip) throws IOException {
+        Map<String, List<String>> files = new TreeMap<>();
+        try (ZipFile zipFile = new ZipFile(zip.toFile())) {
+            Enumeration<? extends ZipEntry> entries = zipFile.entries();
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                String content = new String(zipFile.getInputStream(entry).readAllBytes(), StandardCharsets.UTF_8);
+                files.put(entry.getName(), content.lines().toList());
+            }
+        }
+        return files;
+    }
+
+    private static Map<String, List<String>> readExpectedFiles(String resourceDir) throws URISyntaxException, IOException {
+        Map<String, List<String>> files = new TreeMap<>();
+        try (var paths = Files.list(loadResource(resourceDir))) {
+            for (Path path : paths.toList()) {
+                files.put(path.getFileName().toString(), Files.readAllLines(path, StandardCharsets.UTF_8));
+            }
+        }
+        return files;
+    }
+
+    private static List<String> sortedRows(List<String> lines) {
+        return lines.stream().skip(1).sorted().toList();
     }
 
     private static Path loadResource(String name) throws URISyntaxException {

@@ -9,6 +9,7 @@ import fi.digitraffic.tis.rules.CorruptEntryException;
 import fi.digitraffic.tis.rules.RuleException;
 import net.sf.saxon.s9api.XPathCompiler;
 import net.sf.saxon.s9api.XdmNode;
+import org.entur.netex.validation.exception.NetexValidationException;
 import org.entur.netex.validation.validator.NetexValidatorsRunner;
 import org.entur.netex.validation.validator.Severity;
 import org.entur.netex.validation.validator.SimpleValidationEntryFactory;
@@ -208,7 +209,15 @@ public class EnturNetexValidator {
     }
 
     private List<ValidationReportEntry> validateDuplicateIds(NetexXMLParser netexXMLParser, byte[] fileContent, String filename) {
-        XdmNode document = netexXMLParser.parseByteArrayToXdmNode(fileContent);
+        XdmNode document;
+        try {
+            document = netexXMLParser.parseByteArrayToXdmNode(fileContent);
+        } catch (NetexValidationException e) {
+            // The XML schema validation runs first and reports entries that are not well-formed XML,
+            // so only the duplicate ID check is skipped for them.
+            logger.debug("Skipping duplicate ID check for {}: not well-formed XML", filename, e);
+            return List.of();
+        }
         XPathCompiler xPathCompiler = netexXMLParser.getXPathCompiler();
         List<IdVersion> localIds = NetexIdExtractorHelper.collectEntityIdentifiers(
                 document,

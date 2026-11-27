@@ -32,6 +32,75 @@ for example:
 just run gtfs-canonical
 ```
 
+`just run` processes the queued jobs of one rule and exits when its queue is empty.
+
+### GitHub Container Registry login
+
+The `gtfs2netex-fintraffic` image copies the converter from the private image
+`ghcr.io/tmfg/digitraffic-tis-rules-gtfs2netex`. Building it (`just build`, `just run` or `just up`) needs a one-time
+`docker login ghcr.io`. Without it the build fails with `401 Unauthorized` from `https://ghcr.io/token`.
+
+The registry accepts only a personal access token (classic). Fine-grained tokens do not work. Create one at
+<https://github.com/settings/tokens> with the `read:packages` scope only, and authorize it for the `tmfg` organization
+if SSO is required. Then log in:
+
+```shell
+echo $CR_PAT | docker login ghcr.io -u <github-username> --password-stdin
+```
+
+With the GitHub CLI you can reuse its token instead of creating a separate one. This adds the `read:packages` scope to
+the `gh` token:
+
+```shell
+gh auth refresh -s read:packages
+gh auth token | docker login ghcr.io -u <github-username> --password-stdin
+```
+
+If the login works but the pull is still denied, ask for read access to the package from a `tmfg` organization admin.
+
+### Running all rules in the background
+
+For manual testing through the UI, start all rule workers once instead of running each rule separately:
+
+```shell
+just up                     # build and start all five rules
+just up gtfs-canonical      # or only the named rules
+just logs netex-entur       # follow the logs (all rules without a name)
+just down                   # stop and remove the workers
+```
+
+The workers are defined in [`compose.yaml`](compose.yaml). They need the VACO development environment from
+`digitraffic-tis-vaco` (`docker compose up` there creates the `tis_tis` network, LocalStack and the queues). Each
+worker keeps polling its queue (`IDLE_TIMEOUT_SECONDS`, one hour by default, set it in `.env` to change) and is
+restarted after that, so entries submitted through the UI are processed as they arrive. Code and image changes need
+another `just up`. Each worker has its own `/app/tmp` volume, because a worker empties it after every job.
+
+## Wrapper runtime settings
+
+The shared `wrapper/app.py` reads these optional environment variables. The infrastructure sets both per environment.
+
+ - `IDLE_TIMEOUT_SECONDS`: unset or `0` exits on the first empty receive. A value above `0` long-polls the queue
+   (up to 20 s per call) and exits after that many seconds without messages. An invalid value is treated as `0` with a
+   warning.
+ - `TASK_PROTECTION_MINUTES`: when set and `ECS_AGENT_URI` is set (Fargate), the task enables ECS scale-in protection
+   with this expiry while it processes a job. A failed call is logged and the job still runs. Unset means no
+   protection calls, as in LocalStack and `just run`.
+
+Regardless of the variables:
+
+ - `/app/tmp` is emptied after each job (`app-tmp` on the host with `just run`).
+ - SIGTERM stops receiving. A received but unstarted message is returned to the queue.
+ - Each job logs `queue_wait rule=<rule> entryId=<id> wait_ms=<ms>`.
+
+## Wrapper tests
+
+```shell
+just test
+```
+
+Runs pytest in `wrapper-tests/` inside a virtualenv (`.venv-wrapper-tests`) and needs Python 3.12 or later. The tests
+live outside `wrapper/`, so they are not copied into the images.
+
 ## Development Pointers
 
  - When composing Dockerfile from multiple other images, the base images **must** match!

@@ -1,6 +1,6 @@
 # Dependabot updates only images named in FROM lines, so each merged image has its own stage
-FROM python:3.15.0-alpine3.23 AS python
-FROM node:24.22.2-alpine3.23 AS node
+FROM python:3.15.2-alpine3.23 AS python
+FROM node:24.22.3-alpine3.23 AS node
 
 FROM alpine:3.24 AS app
 
